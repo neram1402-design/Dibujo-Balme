@@ -406,7 +406,12 @@ document.addEventListener('DOMContentLoaded', () => {
             margin:       10,
             filename:     `recibo_${cleanStudentName}_${date}.pdf`,
             image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2 },
+            html2canvas:  { 
+                scale: 2,
+                scrollY: 0,
+                scrollX: 0,
+                windowWidth: 530 // Forzar ancho de renderizado consistente para la plantilla A5 (140mm)
+            },
             jsPDF:        { unit: 'mm', format: 'a5', orientation: 'portrait' }
         };
 

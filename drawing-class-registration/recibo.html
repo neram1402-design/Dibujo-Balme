@@ -15,34 +15,38 @@
     <style>
         /* Asegurar que la tarjeta de recibo use estilos explícitos e independientes de variables CSS para html2pdf/html2canvas */
         #receipt-card-to-print {
-            max-width: 480px;
+            max-width: 440px;
             margin: 0 auto;
             background-color: #ffffff !important;
             color: #202226 !important;
             border: 1px solid #e3e4e6 !important;
-            border-radius: 16px !important;
-            padding: 40px !important;
+            border-radius: 12px !important;
+            padding: 28px !important;
             box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05) !important;
             animation: none !important; /* Desactivar animación para evitar problemas de renderizado en canvas */
         }
         
         .receipt-view-card h1 {
             color: #202226 !important;
-            font-size: 1.6rem;
+            font-size: 1.4rem !important;
             font-weight: 700;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
+        }
+        
+        .receipt-view-card .card-header {
+            margin-bottom: 20px !important;
         }
         
         .receipt-view-card .card-header p {
             color: #676b73 !important;
-            font-size: 0.9rem;
+            font-size: 0.85rem !important;
         }
 
         .receipt-details-table {
             width: 100%;
             border-collapse: collapse;
-            margin: 24px 0;
-            font-size: 0.95rem;
+            margin: 16px 0;
+            font-size: 0.9rem !important;
         }
         .receipt-details-table tr {
             border-bottom: 1px dashed #e3e4e6 !important;
@@ -51,7 +55,7 @@
             border-bottom: none !important;
         }
         .receipt-details-table td {
-            padding: 12px 0;
+            padding: 10px 0 !important;
         }
         .receipt-details-table td.val-label {
             color: #676b73 !important;
@@ -65,23 +69,54 @@
         .receipt-amount-box {
             background-color: #fcf2f4 !important;
             border: 1px solid #e3e4e6 !important;
-            padding: 20px;
+            padding: 16px !important;
             border-radius: 8px !important;
             text-align: center;
-            margin: 24px 0;
+            margin: 18px 0;
         }
         .receipt-amount-title {
-            font-size: 0.75rem;
+            font-size: 0.7rem !important;
             color: #9c0738 !important;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
         }
         .receipt-amount-val {
-            font-size: 1.8rem;
+            font-size: 1.6rem !important;
             font-weight: 800;
             color: #9c0738 !important;
+        }
+
+        /* Optimizaciones de layout para pantallas de celular */
+        @media (max-width: 480px) {
+            body {
+                padding: 12px 12px 24px 12px !important;
+                justify-content: flex-start !important; /* Alinear arriba para evitar desbordamientos */
+            }
+            .minimalist-container {
+                gap: 16px !important;
+            }
+            #receipt-card-to-print {
+                padding: 20px !important;
+                border-radius: 12px !important;
+            }
+            .receipt-view-card h1 {
+                font-size: 1.25rem !important;
+            }
+            .receipt-details-table {
+                margin: 12px 0 !important;
+            }
+            .receipt-details-table td {
+                padding: 8px 0 !important;
+            }
+            .receipt-amount-box {
+                padding: 12px !important;
+                margin: 14px 0 !important;
+            }
+            .receipt-amount-val {
+                font-size: 1.4rem !important;
+            }
         }
     </style>
 </head>
@@ -219,7 +254,12 @@
                     margin:       10,
                     filename:     `recibo_${cleanStudentName}.pdf`,
                     image:        { type: 'jpeg', quality: 0.98 },
-                    html2canvas:  { scale: 2 },
+                    html2canvas:  { 
+                        scale: 2,
+                        scrollY: 0,
+                        scrollX: 0,
+                        windowWidth: 480 // Forzar ancho de renderizado móvil consistente para evitar saltos de línea
+                    },
                     jsPDF:        { unit: 'mm', format: 'a5', orientation: 'portrait' }
                 };
 
