@@ -25,7 +25,7 @@
     </div>
 
     <!-- Main Container -->
-    <main class="minimalist-container admin-container">
+    <main class="minimalist-container admin-container login-mode" id="admin-main-container">
         <!-- Logo Header -->
         <header class="logo-header">
             <a href="index.html" title="Volver al Formulario" class="logo-link">
@@ -33,8 +33,28 @@
             </a>
         </header>
 
+        <!-- Login Card -->
+        <section class="form-card login-card" id="admin-login-card">
+            <div class="card-header">
+                <h1>Acceso Administrativo</h1>
+                <p>Por favor ingresa la clave de administrador para continuar.</p>
+            </div>
+
+            <form id="admin-login-form" novalidate>
+                <div class="form-group" id="login-group">
+                    <label for="admin-password"><i class="fa-solid fa-lock"></i> Contraseña *</label>
+                    <input type="password" id="admin-password" placeholder="Contraseña de administrador" required autocomplete="current-password">
+                    <span class="error-msg">Contraseña incorrecta. Inténtalo de nuevo.</span>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-submit">
+                    Ingresar <i class="fa-solid fa-right-to-bracket"></i>
+                </button>
+            </form>
+        </section>
+
         <!-- Admin Card -->
-        <section class="form-card admin-card">
+        <section class="form-card admin-card" id="admin-dashboard-card" style="display: none;">
             <div class="card-header">
                 <h1>Panel de Alumnos Inscritos</h1>
                 <p>Aquí puedes visualizar, buscar y exportar el listado de personas registradas.</p>

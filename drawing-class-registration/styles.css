@@ -122,6 +122,10 @@ body {
     max-width: 900px;
 }
 
+.minimalist-container.admin-container.login-mode {
+    max-width: 480px;
+}
+
 /* --- HEADER LOGO --- */
 .logo-header {
     width: 100%;

@@ -3,6 +3,10 @@
    ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', () => {
+    // --- CONTRASEÑA DE ADMINISTRADOR ---
+    // Cambia aquí tu contraseña para entrar al panel
+    const ADMIN_PASSWORD = "neram2026";
+
     // --- ELEMENTOS DEL DOM ---
     const themeToggleBtn = document.getElementById('theme-toggle');
     const tableBody = document.getElementById('registrations-table-body');
@@ -11,6 +15,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const emptyState = document.getElementById('admin-empty-state');
     const btnExportCsv = document.getElementById('btn-export-csv');
     const btnClearAll = document.getElementById('btn-clear-all');
+
+    // Elementos de Login
+    const mainContainer = document.getElementById('admin-main-container');
+    const loginCard = document.getElementById('admin-login-card');
+    const dashboardCard = document.getElementById('admin-dashboard-card');
+    const loginForm = document.getElementById('admin-login-form');
+    const passwordInput = document.getElementById('admin-password');
+    const loginGroup = document.getElementById('login-group');
 
     let registrations = [];
 
@@ -172,6 +184,42 @@ document.addEventListener('DOMContentLoaded', () => {
             .replace(/'/g, "&#039;");
     }
 
+    // --- CONTROL DE ACCESO (AUTENTICACIÓN) ---
+    function checkAuthentication() {
+        const isAuthenticated = sessionStorage.getItem('neram_admin_logged_in') === 'true';
+        
+        if (isAuthenticated) {
+            loginCard.style.display = 'none';
+            dashboardCard.style.display = 'block';
+            mainContainer.classList.remove('login-mode');
+            loadRegistrations();
+        } else {
+            loginCard.style.display = 'block';
+            dashboardCard.style.display = 'none';
+            mainContainer.classList.add('login-mode');
+        }
+    }
+
+    loginForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const password = passwordInput.value;
+
+        if (password === ADMIN_PASSWORD) {
+            loginGroup.classList.remove('has-error');
+            sessionStorage.setItem('neram_admin_logged_in', 'true');
+            checkAuthentication();
+        } else {
+            loginGroup.classList.add('has-error');
+            passwordInput.value = '';
+            passwordInput.focus();
+        }
+    });
+
+    // Quitar error al escribir
+    passwordInput.addEventListener('input', () => {
+        loginGroup.classList.remove('has-error');
+    });
+
     // Inicializar
-    loadRegistrations();
+    checkAuthentication();
 });
