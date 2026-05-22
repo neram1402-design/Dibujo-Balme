@@ -309,7 +309,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // 1. Descargar el recibo en PDF automáticamente
         downloadPDFReceipt(student, tutor, amount, date, concept);
 
-        // 2. Formatear y abrir el mensaje de WhatsApp
+        // 2. Generar el enlace dinámico del recibo para el tutor
+        const baseUrl = window.location.origin + window.location.pathname.replace('admin.html', 'recibo.html');
+        const receiptUrl = `${baseUrl}?alumno=${encodeURIComponent(student)}&tutor=${encodeURIComponent(tutor)}&concepto=${encodeURIComponent(concept)}&cantidad=${encodeURIComponent(amount)}&fecha=${encodeURIComponent(date)}`;
+
+        // 3. Formatear y abrir el mensaje de WhatsApp
         const parts = date.split('-');
         const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
         const formattedDate = dateObj.toLocaleDateString('es-ES', {
@@ -324,13 +328,15 @@ document.addEventListener('DOMContentLoaded', () => {
                      `• *Concepto:* ${concept}\n` +
                      `• *Fecha de Pago:* ${formattedDate}\n` +
                      `• *Cantidad:* $${parseFloat(amount).toFixed(2)} MXN\n\n` +
+                     `Puedes ver y descargar tu recibo en PDF aquí:\n` +
+                     `${receiptUrl}\n\n` +
                      `¡Muchas gracias por tu confianza! ✨`;
 
         const encodedText = encodeURIComponent(text);
         const cleanPhone = currentActiveReg.tutorPhone.replace(/\D/g, '');
         const whatsappUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}`;
 
-        // 3. Abrir en WhatsApp (para arrastrar/adjuntar el archivo PDF descargado)
+        // 4. Abrir en WhatsApp (para arrastrar/adjuntar el archivo PDF descargado o simplemente enviar el enlace)
         window.open(whatsappUrl, '_blank');
         closeReceiptModal();
     });

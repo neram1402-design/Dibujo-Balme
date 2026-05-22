@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NERAM - ART | Recibo de Pago</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Main stylesheet -->
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .receipt-view-card {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .receipt-details-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 24px 0;
+            font-size: 0.95rem;
+        }
+        .receipt-details-table tr {
+            border-bottom: 1px dashed var(--border-color);
+        }
+        .receipt-details-table tr:last-of-type {
+            border-bottom: none;
+        }
+        .receipt-details-table td {
+            padding: 12px 0;
+        }
+        .receipt-details-table td.val-label {
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+        .receipt-details-table td.val-content {
+            font-weight: 600;
+            text-align: right;
+            color: var(--text-main);
+        }
+        .receipt-amount-box {
+            background-color: var(--primary-light);
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            border-radius: var(--radius-sm);
+            text-align: center;
+            margin: 24px 0;
+        }
+        .receipt-amount-title {
+            font-size: 0.75rem;
+            color: var(--primary);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+        .receipt-amount-val {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <!-- Theme Toggle -->
+    <div class="top-actions">
+        <button id="theme-toggle" class="theme-toggle-btn" aria-label="Cambiar tema de color">
+            <i class="fa-solid fa-moon"></i>
+        </button>
+    </div>
+
+    <!-- Main Container -->
+    <main class="minimalist-container">
+        <!-- Logo Header -->
+        <header class="logo-header">
+            <img src="assets/logo.jpg" alt="NERAM - ART Logo" class="brand-logo">
+        </header>
+
+        <!-- Receipt Card -->
+        <section class="form-card receipt-view-card" id="receipt-card-to-print">
+            <div class="card-header">
+                <span class="success-icon" style="font-size: 2.5rem; color: var(--primary); display: block; margin-bottom: 12px;">
+                    <i class="fa-solid fa-circle-check"></i>
+                </span>
+                <h1>Comprobante de Pago</h1>
+                <p>NERAM - ART • Libera tu creatividad</p>
+            </div>
+
+            <!-- Details -->
+            <table class="receipt-details-table">
+                <tr>
+                    <td class="val-label">Fecha de Pago:</td>
+                    <td class="val-content" id="rec-date">-</td>
+                </tr>
+                <tr>
+                    <td class="val-label">Alumno:</td>
+                    <td class="val-content" id="rec-student">-</td>
+                </tr>
+                <tr>
+                    <td class="val-label">Tutor:</td>
+                    <td class="val-content" id="rec-tutor">-</td>
+                </tr>
+                <tr>
+                    <td class="val-label">Concepto:</td>
+                    <td class="val-content" id="rec-concept">-</td>
+                </tr>
+            </table>
+
+            <!-- Amount Box -->
+            <div class="receipt-amount-box">
+                <div class="receipt-amount-title">Total Pagado</div>
+                <div class="receipt-amount-val" id="rec-amount">$0.00 MXN</div>
+            </div>
+
+            <!-- Download Button -->
+            <button id="btn-download-pdf" class="btn btn-primary btn-submit">
+                <i class="fa-solid fa-file-pdf"></i> Descargar Recibo PDF
+            </button>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="simple-footer">
+        <p>&copy; 2026 NERAM - ART. Todos los derechos reservados.</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Theme Toggle
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const currentTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            updateThemeIcon(currentTheme);
+
+            themeToggleBtn.addEventListener('click', () => {
+                let theme = document.documentElement.getAttribute('data-theme');
+                let newTheme = (theme === 'dark') ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                updateThemeIcon(newTheme);
+            });
+
+            function updateThemeIcon(theme) {
+                const icon = themeToggleBtn.querySelector('i');
+                icon.className = theme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+            }
+
+            // Parse Query Parameters
+            const params = new URLSearchParams(window.location.search);
+            const student = params.get('alumno') || 'Alumno';
+            const tutor = params.get('tutor') || 'Tutor';
+            const concept = params.get('concepto') || 'Taller de Dibujo';
+            const amount = params.get('cantidad') || '0';
+            const dateVal = params.get('fecha') || new Date().toISOString().split('T')[0];
+
+            // Formatear Fecha
+            let formattedDate = dateVal;
+            try {
+                const parts = dateVal.split('-');
+                if (parts.length === 3) {
+                    const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
+                    formattedDate = dateObj.toLocaleDateString('es-ES', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                    });
+                }
+            } catch (e) {
+                console.error(e);
+            }
+
+            // Formatear Cantidad
+            const formattedAmount = parseFloat(amount).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+            // Rellenar UI
+            document.getElementById('rec-student').textContent = student;
+            document.getElementById('rec-tutor').textContent = tutor;
+            document.getElementById('rec-concept').textContent = concept;
+            document.getElementById('rec-date').textContent = formattedDate;
+            document.getElementById('rec-amount').textContent = `$${formattedAmount} MXN`;
+
+            // Descargar PDF
+            const btnDownload = document.getElementById('btn-download-pdf');
+            btnDownload.addEventListener('click', () => {
+                const element = document.getElementById('receipt-card-to-print');
+                
+                // Ocultar botón de descarga temporalmente para que no salga en el PDF
+                btnDownload.style.display = 'none';
+
+                const cleanStudentName = student.toLowerCase().replace(/[^a-z0-9]/g, '_');
+                const opt = {
+                    margin:       10,
+                    filename:     `recibo_${cleanStudentName}.pdf`,
+                    image:        { type: 'jpeg', quality: 0.98 },
+                    html2canvas:  { scale: 2 },
+                    jsPDF:        { unit: 'mm', format: 'a5', orientation: 'portrait' }
+                };
+
+                html2pdf().set(opt).from(element).save().then(() => {
+                    // Volver a mostrar el botón
+                    btnDownload.style.display = 'block';
+                }).catch((err) => {
+                    console.error(err);
+                    btnDownload.style.display = 'block';
+                });
+            });
+        });
+    </script>
+</body>
+</html>
