@@ -129,6 +129,16 @@ body {
     justify-content: center;
 }
 
+.logo-link {
+    display: inline-flex;
+    transition: transform var(--transition-fast), opacity var(--transition-fast);
+}
+
+.logo-link:hover {
+    transform: scale(1.02);
+    opacity: 0.95;
+}
+
 .brand-logo {
     max-width: 220px;
     height: auto;
