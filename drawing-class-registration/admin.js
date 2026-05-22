@@ -100,7 +100,10 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             // Número limpio para el enlace de WhatsApp
-            const cleanPhone = reg.tutorPhone.replace(/\D/g, '');
+            let cleanPhone = reg.tutorPhone.replace(/\D/g, '');
+            if (cleanPhone.length === 10) {
+                cleanPhone = '52' + cleanPhone;
+            }
 
             const row = `
                 <tr>
@@ -279,7 +282,7 @@ document.addEventListener('DOMContentLoaded', () => {
     receiptDate.addEventListener('change', () => receiptDateGroup.classList.remove('has-error'));
     receiptConcept.addEventListener('input', () => receiptConceptGroup.classList.remove('has-error'));
 
-    // Acción: Imprimir / PDF
+    // Acción: Descargar PDF
     btnPrintReceipt.addEventListener('click', () => {
         if (!validateReceiptForm()) return;
 
@@ -289,10 +292,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const date = receiptDate.value;
         const concept = receiptConcept.value;
 
-        printReceipt(student, tutor, amount, date, concept);
+        downloadPDFReceipt(student, tutor, amount, date, concept);
     });
 
-    // Acción: Enviar por WhatsApp
+    // Acción: Enviar por WhatsApp (También descarga el PDF)
     receiptForm.addEventListener('submit', (e) => {
         e.preventDefault();
         if (!validateReceiptForm() || !currentActiveReg) return;
@@ -303,7 +306,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const date = receiptDate.value;
         const concept = receiptConcept.value;
 
-        // Formatear fecha para el mensaje (ej: 22 de mayo de 2026)
+        // 1. Descargar el recibo en PDF automáticamente
+        downloadPDFReceipt(student, tutor, amount, date, concept);
+
+        // 2. Formatear y abrir el mensaje de WhatsApp
         const parts = date.split('-');
         const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
         const formattedDate = dateObj.toLocaleDateString('es-ES', {
@@ -324,14 +330,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const cleanPhone = currentActiveReg.tutorPhone.replace(/\D/g, '');
         const whatsappUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}`;
 
-        // Abrir en WhatsApp
+        // 3. Abrir en WhatsApp (para arrastrar/adjuntar el archivo PDF descargado)
         window.open(whatsappUrl, '_blank');
         closeReceiptModal();
     });
 
-    // Imprimir el recibo en un formato limpio (HTML Popup para imprimir)
-    function printReceipt(student, tutor, amount, date, concept) {
-        const printWindow = window.open('', '_blank', 'width=600,height=600');
+    // Generar y descargar el recibo en PDF usando html2pdf.js
+    function downloadPDFReceipt(student, tutor, amount, date, concept) {
         const formattedAmount = parseFloat(amount).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         
         const parts = date.split('-');
@@ -342,147 +347,62 @@ document.addEventListener('DOMContentLoaded', () => {
             year: 'numeric'
         });
 
-        printWindow.document.write(`
-            <!DOCTYPE html>
-            <html lang="es">
-            <head>
-                <meta charset="UTF-8">
-                <title>Recibo de Pago - NERAM - ART</title>
-                <style>
-                    body {
-                        font-family: 'Outfit', sans-serif;
-                        color: #1a1a1a;
-                        padding: 40px;
-                        margin: 0;
-                        background: #ffffff;
-                    }
-                    .receipt-box {
-                        max-width: 450px;
-                        margin: 0 auto;
-                        border: 1px solid #e0e0e0;
-                        padding: 30px;
-                        border-radius: 12px;
-                        box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-                    }
-                    .receipt-header {
-                        text-align: center;
-                        border-bottom: 2px solid #9c0738;
-                        padding-bottom: 15px;
-                        margin-bottom: 25px;
-                    }
-                    .receipt-title {
-                        font-size: 1.5rem;
-                        font-weight: 700;
-                        color: #9c0738;
-                        text-transform: uppercase;
-                        margin: 5px 0;
-                        letter-spacing: 1px;
-                    }
-                    .receipt-subtitle {
-                        font-size: 0.85rem;
-                        color: #666;
-                        margin: 0;
-                    }
-                    .receipt-row {
-                        display: flex;
-                        justify-content: space-between;
-                        margin-bottom: 15px;
-                        font-size: 0.95rem;
-                        border-bottom: 1px dashed #f0f0f0;
-                        padding-bottom: 8px;
-                    }
-                    .receipt-row:last-of-type {
-                        border-bottom: none;
-                    }
-                    .label {
-                        color: #666;
-                        font-weight: 500;
-                    }
-                    .value {
-                        font-weight: 600;
-                        text-align: right;
-                    }
-                    .amount-container {
-                        background: #fbf0f3;
-                        border: 1px solid #f5d6df;
-                        padding: 15px;
-                        border-radius: 8px;
-                        text-align: center;
-                        margin: 25px 0 15px 0;
-                    }
-                    .amount-label {
-                        font-size: 0.8rem;
-                        color: #9c0738;
-                        font-weight: 600;
-                        text-transform: uppercase;
-                        margin-bottom: 5px;
-                    }
-                    .amount-value {
-                        font-size: 1.8rem;
-                        font-weight: 800;
-                        color: #9c0738;
-                    }
-                    .footer {
-                        text-align: center;
-                        margin-top: 30px;
-                        font-size: 0.85rem;
-                        color: #999;
-                        line-height: 1.4;
-                    }
-                    @media print {
-                        body { padding: 20px; }
-                        .receipt-box { border: none; box-shadow: none; padding: 0; }
-                    }
-                </style>
-                <!-- Google Font -->
-                <link rel="preconnect" href="https://fonts.googleapis.com">
-                <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-                <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-            </head>
-            <body>
-                <div class="receipt-box">
-                    <div class="receipt-header">
-                        <h2 class="receipt-title">Comprobante de Pago</h2>
-                        <p class="receipt-subtitle">NERAM - ART • Libera tu creatividad</p>
-                    </div>
-                    
-                    <div class="receipt-row">
-                        <span class="label">Fecha de Pago:</span>
-                        <span class="value">${formattedDate}</span>
-                    </div>
-                    <div class="receipt-row">
-                        <span class="label">Alumno:</span>
-                        <span class="value">${student}</span>
-                    </div>
-                    <div class="receipt-row">
-                        <span class="label">Tutor:</span>
-                        <span class="value">${tutor}</span>
-                    </div>
-                    <div class="receipt-row">
-                        <span class="label">Concepto:</span>
-                        <span class="value">${concept}</span>
-                    </div>
-                    
-                    <div class="amount-container">
-                        <div class="amount-label">Total Recibido</div>
-                        <div class="amount-value">$${formattedAmount} MXN</div>
-                    </div>
-                    
-                    <div class="footer">
-                        ¡Gracias por tu confianza! 🎨<br>
-                        Contacto: neram.art@gmail.com
-                    </div>
+        // Crear elemento temporal para html2pdf
+        const element = document.createElement('div');
+        element.style.padding = '15px';
+        element.style.width = '140mm'; // Tamaño para A5
+        element.style.backgroundColor = '#ffffff';
+        element.style.fontFamily = "'Outfit', sans-serif";
+
+        element.innerHTML = `
+            <div style="border: 1px solid #e0e0e0; padding: 25px; border-radius: 12px; background: #ffffff;">
+                <div style="text-align: center; border-bottom: 2px solid #9c0738; padding-bottom: 12px; margin-bottom: 20px;">
+                    <h2 style="font-size: 1.4rem; font-weight: 700; color: #9c0738; text-transform: uppercase; margin: 5px 0; letter-spacing: 0.5px; font-family: 'Outfit', sans-serif;">Comprobante de Pago</h2>
+                    <p style="font-size: 0.8rem; color: #666; margin: 0; font-weight: 500; font-family: 'Outfit', sans-serif;">NERAM - ART • Libera tu creatividad</p>
                 </div>
-                <script>
-                    window.onload = function() {
-                        window.print();
-                        setTimeout(function() { window.close(); }, 500);
-                    }
-                <\/script>
-            </body>
-            </html>
-        `);
-        printWindow.document.close();
+                
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 0.9rem; font-family: 'Outfit', sans-serif;">
+                    <tr style="border-bottom: 1px dashed #f0f0f0;">
+                        <td style="padding: 8px 0; color: #666; font-weight: 500;">Fecha de Pago:</td>
+                        <td style="padding: 8px 0; font-weight: 600; text-align: right; color: #1a1a1a;">${formattedDate}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px dashed #f0f0f0;">
+                        <td style="padding: 8px 0; color: #666; font-weight: 500;">Alumno:</td>
+                        <td style="padding: 8px 0; font-weight: 600; text-align: right; color: #1a1a1a;">${student}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px dashed #f0f0f0;">
+                        <td style="padding: 8px 0; color: #666; font-weight: 500;">Tutor:</td>
+                        <td style="padding: 8px 0; font-weight: 600; text-align: right; color: #1a1a1a;">${tutor}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px dashed #f0f0f0;">
+                        <td style="padding: 8px 0; color: #666; font-weight: 500;">Concepto:</td>
+                        <td style="padding: 8px 0; font-weight: 600; text-align: right; color: #1a1a1a;">${concept}</td>
+                    </tr>
+                </table>
+                
+                <div style="background: #fbf0f3; border: 1px solid #f5d6df; padding: 12px; border-radius: 8px; text-align: center; margin: 20px 0 10px 0; font-family: 'Outfit', sans-serif;">
+                    <div style="font-size: 0.75rem; color: #9c0738; font-weight: 600; text-transform: uppercase; margin-bottom: 3px; letter-spacing: 0.5px;">Total Recibido</div>
+                    <div style="font-size: 1.6rem; font-weight: 800; color: #9c0738;">$${formattedAmount} MXN</div>
+                </div>
+                
+                <div style="text-align: center; margin-top: 25px; font-size: 0.78rem; color: #999; line-height: 1.4; border-top: 1px solid #f0f0f0; padding-top: 15px; font-family: 'Outfit', sans-serif;">
+                    ¡Gracias por tu confianza! 🎨<br>
+                    Contacto: neram.art@gmail.com
+                </div>
+            </div>
+        `;
+
+        const cleanStudentName = student.toLowerCase().replace(/[^a-z0-9]/g, '_');
+        const opt = {
+            margin:       10,
+            filename:     `recibo_${cleanStudentName}_${date}.pdf`,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2 },
+            jsPDF:        { unit: 'mm', format: 'a5', orientation: 'portrait' }
+        };
+
+        // Descargar PDF
+        html2pdf().set(opt).from(element).save();
     }
 
     // --- CONTROL DE ACCESO (AUTENTICACIÓN) ---

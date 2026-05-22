@@ -81,13 +81,24 @@ document.addEventListener('DOMContentLoaded', () => {
             // Obtener valores
             const studentName = studentNameInput.value.trim();
             const tutorName = tutorNameInput.value.trim();
-            const tutorPhone = tutorPhoneInput.value.trim();
+            const tutorPhoneRaw = tutorPhoneInput.value.trim();
+            
+            // Limpiar número y agregar prefijo 52 de México si son 10 dígitos
+            let cleanPhone = tutorPhoneRaw.replace(/\D/g, '');
+            if (cleanPhone.length === 10) {
+                cleanPhone = '52' + cleanPhone;
+            } else if (cleanPhone.length === 12 && cleanPhone.startsWith('52')) {
+                // Ya tiene el 52
+            } else {
+                // Por si acaso, si es otro número, lo dejamos tal cual
+                cleanPhone = cleanPhone || tutorPhoneRaw;
+            }
 
             // Guardar en base de datos local (localStorage)
             const registration = {
                 studentName,
                 tutorName,
-                tutorPhone,
+                tutorPhone: cleanPhone,
                 date: new Date().toISOString()
             };
             
@@ -98,7 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Rellenar resumen en pantalla
             summaryStudent.textContent = studentName;
             summaryTutor.textContent = tutorName;
-            summaryPhone.textContent = tutorPhone;
+            summaryPhone.textContent = cleanPhone;
 
             // Transición de tarjetas
             formCardContainer.style.display = 'none';
@@ -108,7 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
             initConfetti();
 
             // Redirigir a WhatsApp
-            sendWhatsAppMessage(studentName, tutorName, tutorPhone);
+            sendWhatsAppMessage(studentName, tutorName, cleanPhone);
         }
     });
 
