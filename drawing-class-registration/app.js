@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- CONFIGURACIÓN DE WHATSAPP ---
     // Coloca aquí tu número de WhatsApp con código de país (sin símbolos ni espacios)
     // Ejemplo para México (+52): "524921259387"
-    const WHATSAPP_NUMBER = "525512345678"; 
+    const WHATSAPP_NUMBER = "524921259387"; 
 
     // --- ELEMENTOS DEL DOM ---
     const themeToggleBtn = document.getElementById('theme-toggle');
