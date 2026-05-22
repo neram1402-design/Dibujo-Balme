@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NERAM - ART | Administración de Inscripciones</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Main stylesheet -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Theme Toggle (Subtle corner button) -->
+    <div class="top-actions">
+        <a href="index.html" class="btn btn-outline btn-small btn-header-back">
+            <i class="fa-solid fa-arrow-left"></i> Volver al Formulario
+        </a>
+        <button id="theme-toggle" class="theme-toggle-btn" aria-label="Cambiar tema de color">
+            <i class="fa-solid fa-moon"></i>
+        </button>
+    </div>
+
+    <!-- Main Container -->
+    <main class="minimalist-container admin-container">
+        <!-- Logo Header -->
+        <header class="logo-header">
+            <img src="assets/logo.jpg" alt="NERAM - ART Logo" class="brand-logo">
+        </header>
+
+        <!-- Admin Card -->
+        <section class="form-card admin-card">
+            <div class="card-header">
+                <h1>Panel de Alumnos Inscritos</h1>
+                <p>Aquí puedes visualizar, buscar y exportar el listado de personas registradas.</p>
+            </div>
+
+            <!-- Stats and Search Tools -->
+            <div class="admin-tools">
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="admin-search" placeholder="Buscar por alumno, tutor o teléfono...">
+                </div>
+                <div class="stats-counter">
+                    <span>Total Inscritos: <strong id="total-registrations-count">0</strong></span>
+                </div>
+            </div>
+
+            <!-- Table Container -->
+            <div class="table-responsive">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Alumno</th>
+                            <th>Tutor</th>
+                            <th>Teléfono</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="registrations-table-body">
+                        <!-- Filled by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Empty State for Admin -->
+            <div class="admin-empty-state" id="admin-empty-state" style="display: none;">
+                <i class="fa-solid fa-users-slash"></i>
+                <h3>No hay alumnos inscritos</h3>
+                <p>Los alumnos que se registren en el formulario aparecerán aquí.</p>
+            </div>
+
+            <!-- Actions Footer -->
+            <div class="admin-actions-footer">
+                <button id="btn-export-csv" class="btn btn-outline">
+                    <i class="fa-solid fa-file-excel"></i> Descargar Excel (CSV)
+                </button>
+                <button id="btn-clear-all" class="btn btn-outline btn-danger-outline">
+                    <i class="fa-solid fa-trash-can"></i> Borrar Todo
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="simple-footer">
+        <p>&copy; 2026 NERAM - ART. Portal de Administración. Todos los derechos reservados.</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="admin.js"></script>
+</body>
+</html>

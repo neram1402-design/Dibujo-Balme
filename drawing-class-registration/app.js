@@ -3,6 +3,11 @@
    ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', () => {
+    // --- CONFIGURACIÓN DE WHATSAPP ---
+    // Coloca aquí tu número de WhatsApp con código de país (sin símbolos ni espacios)
+    // Ejemplo para México (+52): "524921259387"
+    const WHATSAPP_NUMBER = "525512345678"; 
+
     // --- ELEMENTOS DEL DOM ---
     const themeToggleBtn = document.getElementById('theme-toggle');
     const registrationForm = document.getElementById('simple-registration-form');
@@ -78,7 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const tutorName = tutorNameInput.value.trim();
             const tutorPhone = tutorPhoneInput.value.trim();
 
-            // Guardar localmente (opcional)
+            // Guardar en base de datos local (localStorage)
             const registration = {
                 studentName,
                 tutorName,
@@ -90,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
             history.push(registration);
             localStorage.setItem('neram_registrations', JSON.stringify(history));
 
-            // Rellenar resumen
+            // Rellenar resumen en pantalla
             summaryStudent.textContent = studentName;
             summaryTutor.textContent = tutorName;
             summaryPhone.textContent = tutorPhone;
@@ -101,8 +106,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Lanzar Confetti
             initConfetti();
+
+            // Redirigir a WhatsApp
+            sendWhatsAppMessage(studentName, tutorName, tutorPhone);
         }
     });
+
+    // --- ENVIAR MENSAJE DE WHATSAPP ---
+    function sendWhatsAppMessage(student, tutor, phone) {
+        const text = `¡Hola NERAM - ART! 🎨\n\n` +
+                     `Me gustaría inscribir a un alumno al taller de dibujo:\n\n` +
+                     `• *Alumno:* ${student}\n` +
+                     `• *Tutor:* ${tutor}\n` +
+                     `• *Teléfono:* ${phone}`;
+        
+        const encodedText = encodeURIComponent(text);
+        const whatsappUrl = `https://api.whatsapp.com/send?phone=${WHATSAPP_NUMBER}&text=${encodedText}`;
+        
+        // Abrir WhatsApp en pestaña nueva
+        window.open(whatsappUrl, '_blank');
+    }
 
     // --- RESETEAR / VOLVER A REGISTRAR ---
     btnResetForm.addEventListener('click', () => {
