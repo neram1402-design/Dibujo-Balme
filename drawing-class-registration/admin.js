@@ -359,6 +359,9 @@ document.addEventListener('DOMContentLoaded', () => {
         element.style.width = '140mm'; // Tamaño para A5
         element.style.backgroundColor = '#ffffff';
         element.style.fontFamily = "'Outfit', sans-serif";
+        element.style.position = 'absolute';
+        element.style.left = '-9999px';
+        element.style.top = '0';
 
         element.innerHTML = `
             <div style="border: 1px solid #e0e0e0; padding: 25px; border-radius: 12px; background: #ffffff;">
@@ -407,8 +410,16 @@ document.addEventListener('DOMContentLoaded', () => {
             jsPDF:        { unit: 'mm', format: 'a5', orientation: 'portrait' }
         };
 
-        // Descargar PDF
-        html2pdf().set(opt).from(element).save();
+        // Agregar al DOM antes de llamar a html2pdf
+        document.body.appendChild(element);
+
+        // Descargar PDF y limpiar
+        html2pdf().set(opt).from(element).save().then(() => {
+            document.body.removeChild(element);
+        }).catch((err) => {
+            console.error('Error al generar PDF:', err);
+            document.body.removeChild(element);
+        });
     }
 
     // --- CONTROL DE ACCESO (AUTENTICACIÓN) ---

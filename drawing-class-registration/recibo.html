@@ -13,10 +13,31 @@
     <!-- Main stylesheet -->
     <link rel="stylesheet" href="styles.css">
     <style>
-        .receipt-view-card {
-            max-width: 500px;
+        /* Asegurar que la tarjeta de recibo use estilos explícitos e independientes de variables CSS para html2pdf/html2canvas */
+        #receipt-card-to-print {
+            max-width: 480px;
             margin: 0 auto;
+            background-color: #ffffff !important;
+            color: #202226 !important;
+            border: 1px solid #e3e4e6 !important;
+            border-radius: 16px !important;
+            padding: 40px !important;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05) !important;
+            animation: none !important; /* Desactivar animación para evitar problemas de renderizado en canvas */
         }
+        
+        .receipt-view-card h1 {
+            color: #202226 !important;
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .receipt-view-card .card-header p {
+            color: #676b73 !important;
+            font-size: 0.9rem;
+        }
+
         .receipt-details-table {
             width: 100%;
             border-collapse: collapse;
@@ -24,34 +45,34 @@
             font-size: 0.95rem;
         }
         .receipt-details-table tr {
-            border-bottom: 1px dashed var(--border-color);
+            border-bottom: 1px dashed #e3e4e6 !important;
         }
         .receipt-details-table tr:last-of-type {
-            border-bottom: none;
+            border-bottom: none !important;
         }
         .receipt-details-table td {
             padding: 12px 0;
         }
         .receipt-details-table td.val-label {
-            color: var(--text-muted);
+            color: #676b73 !important;
             font-weight: 500;
         }
         .receipt-details-table td.val-content {
             font-weight: 600;
             text-align: right;
-            color: var(--text-main);
+            color: #202226 !important;
         }
         .receipt-amount-box {
-            background-color: var(--primary-light);
-            border: 1px solid var(--border-color);
+            background-color: #fcf2f4 !important;
+            border: 1px solid #e3e4e6 !important;
             padding: 20px;
-            border-radius: var(--radius-sm);
+            border-radius: 8px !important;
             text-align: center;
             margin: 24px 0;
         }
         .receipt-amount-title {
             font-size: 0.75rem;
-            color: var(--primary);
+            color: #9c0738 !important;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -60,7 +81,7 @@
         .receipt-amount-val {
             font-size: 1.8rem;
             font-weight: 800;
-            color: var(--primary);
+            color: #9c0738 !important;
         }
     </style>
 </head>
@@ -82,9 +103,10 @@
         <!-- Receipt Card -->
         <section class="form-card receipt-view-card" id="receipt-card-to-print">
             <div class="card-header">
-                <span class="success-icon" style="font-size: 2.5rem; color: var(--primary); display: block; margin-bottom: 12px;">
-                    <i class="fa-solid fa-circle-check"></i>
-                </span>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#9c0738" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width: 48px; height: 48px; margin: 0 auto 12px auto; display: block;">
+                    <circle cx="12" cy="12" r="10" stroke="#9c0738" stroke-width="2" fill="none"></circle>
+                    <polyline points="8 12 11 15 16 9"></polyline>
+                </svg>
                 <h1>Comprobante de Pago</h1>
                 <p>NERAM - ART • Libera tu creatividad</p>
             </div>
