@@ -113,6 +113,63 @@
         <p>&copy; 2026 NERAM - ART. Portal de Administración. Todos los derechos reservados.</p>
     </footer>
 
+    <!-- Modal para Recibo de Pago -->
+    <div id="receipt-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-card">
+            <button id="close-modal-btn" class="modal-close-btn" aria-label="Cerrar modal">&times;</button>
+            <div class="card-header">
+                <h2><i class="fa-solid fa-file-invoice-dollar"></i> Generar Recibo de Pago</h2>
+                <p>Ingresa la información del pago para enviar el recibo.</p>
+            </div>
+            <form id="receipt-form" novalidate>
+                <!-- Alumno (Info) -->
+                <div class="form-group">
+                    <label>Alumno</label>
+                    <input type="text" id="receipt-student" class="input-readonly" readonly>
+                </div>
+                
+                <!-- Tutor (Info) -->
+                <div class="form-group">
+                    <label>Tutor</label>
+                    <input type="text" id="receipt-tutor" class="input-readonly" readonly>
+                </div>
+
+                <div class="form-row-2">
+                    <!-- Cantidad -->
+                    <div class="form-group" id="receipt-amount-group">
+                        <label for="receipt-amount"><i class="fa-solid fa-dollar-sign"></i> Cantidad ($) *</label>
+                        <input type="number" id="receipt-amount" placeholder="Ej. 500" required min="1">
+                        <span class="error-msg">Ingresa una cantidad válida.</span>
+                    </div>
+
+                    <!-- Fecha -->
+                    <div class="form-group" id="receipt-date-group">
+                        <label for="receipt-date"><i class="fa-solid fa-calendar-day"></i> Fecha de Pago *</label>
+                        <input type="date" id="receipt-date" required>
+                        <span class="error-msg">Selecciona una fecha.</span>
+                    </div>
+                </div>
+
+                <!-- Concepto -->
+                <div class="form-group" id="receipt-concept-group">
+                    <label for="receipt-concept"><i class="fa-solid fa-pen-clip"></i> Concepto *</label>
+                    <input type="text" id="receipt-concept" value="Mensualidad Taller de Dibujo" required>
+                    <span class="error-msg">Ingresa el concepto del pago.</span>
+                </div>
+
+                <!-- Modal Actions -->
+                <div class="modal-actions-container">
+                    <button type="button" id="btn-print-receipt" class="btn btn-outline">
+                        <i class="fa-solid fa-print"></i> Imprimir / PDF
+                    </button>
+                    <button type="submit" id="btn-send-receipt-wa" class="btn btn-primary">
+                        Enviar por WhatsApp <i class="fa-brands fa-whatsapp"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="admin.js"></script>
 </body>

@@ -602,3 +602,114 @@ input:focus {
         padding: 20px;
     }
 }
+
+/* --- MODAL PARA RECIBO DE PAGO --- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn var(--transition-fast);
+}
+
+.modal-card {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 30px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: var(--shadow-md);
+    position: relative;
+    animation: slideDown var(--transition-normal);
+}
+
+.modal-close-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 1.8rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    line-height: 1;
+    transition: color var(--transition-fast);
+}
+
+.modal-close-btn:hover {
+    color: var(--primary);
+}
+
+.input-readonly {
+    background-color: var(--primary-light);
+    border-color: var(--border-color);
+    color: var(--text-muted);
+    cursor: not-allowed;
+    font-weight: 500;
+}
+
+.input-readonly:focus {
+    box-shadow: none;
+    border-color: var(--border-color);
+    background-color: var(--primary-light);
+}
+
+.form-row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.modal-actions-container {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.modal-actions-container button {
+    flex: 1;
+}
+
+/* Estilo del botón de recibo en la tabla */
+.action-btn.receipt-btn {
+    color: #1a73e8;
+    background-color: rgba(26, 115, 232, 0.08);
+}
+
+.action-btn.receipt-btn:hover {
+    color: #ffffff;
+    background-color: #1a73e8;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 480px) {
+    .form-row-2 {
+        grid-template-columns: 1fr;
+    }
+    .modal-actions-container {
+        flex-direction: column;
+    }
+}
