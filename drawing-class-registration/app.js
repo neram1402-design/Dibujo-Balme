@@ -3,6 +3,12 @@
    ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', () => {
+    // --- CONFIGURACIÓN DE SUPABASE (BASE DE DATOS) ---
+    // Completa esto con las claves de tu proyecto en Supabase.com
+    // Una vez configurado, los registros de todos los celulares se guardarán en la nube.
+    const SUPABASE_URL = "https://nnvsenwzckgmfwfgkxbf.supabase.co"; 
+    const SUPABASE_ANON_KEY = "sb_publishable_pt4F0QVSU4kHqCMP4cw01g_yR5JXbNX";
+
     // --- CONFIGURACIÓN DE WHATSAPP ---
     // Coloca aquí tu número de WhatsApp con código de país (sin símbolos ni espacios)
     // Ejemplo para México (+52): "524921259387"
@@ -94,7 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 cleanPhone = cleanPhone || tutorPhoneRaw;
             }
 
-            // Guardar en base de datos local (localStorage)
+            // Guardar en base de datos local (localStorage) como respaldo
             const registration = {
                 studentName,
                 tutorName,
@@ -105,6 +111,27 @@ document.addEventListener('DOMContentLoaded', () => {
             let history = JSON.parse(localStorage.getItem('neram_registrations')) || [];
             history.push(registration);
             localStorage.setItem('neram_registrations', JSON.stringify(history));
+
+            // Guardar en base de datos en la nube (Supabase) si está configurado
+            if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+                try {
+                    const { createClient } = supabase;
+                    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                    supabaseClient.from('registrations').insert([
+                        {
+                            student_name: studentName,
+                            tutor_name: tutorName,
+                            tutor_phone: cleanPhone,
+                            date: registration.date
+                        }
+                    ]).then(({ error }) => {
+                        if (error) console.error("Error guardando en Supabase:", error);
+                        else console.log("Guardado exitoso en Supabase");
+                    });
+                } catch (err) {
+                    console.error("Fallo al conectar o guardar en Supabase:", err);
+                }
+            }
 
             // Rellenar resumen en pantalla
             summaryStudent.textContent = studentName;

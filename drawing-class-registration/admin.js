@@ -3,6 +3,12 @@
    ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', () => {
+    // --- CONFIGURACIÓN DE SUPABASE (BASE DE DATOS) ---
+    // Completa esto con las claves de tu proyecto en Supabase.com
+    // Una vez configurado, los registros se cargarán desde la nube en tiempo real.
+    const SUPABASE_URL = "https://nnvsenwzckgmfwfgkxbf.supabase.co"; 
+    const SUPABASE_ANON_KEY = "sb_publishable_pt4F0QVSU4kHqCMP4cw01g_yR5JXbNX";
+
     // --- CONTRASEÑA DE ADMINISTRADOR ---
     // Cambia aquí tu contraseña para entrar al panel
     const ADMIN_PASSWORD = "neram2026";
@@ -63,12 +69,51 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- CARGAR DATOS DE LOCALSTORAGE ---
+    // --- CARGAR DATOS (DESDE SUPABASE O LOCALSTORAGE COMO RESPALDO) ---
     function loadRegistrations() {
+        if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+            try {
+                const { createClient } = supabase;
+                const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                
+                // Mostrar spinner de carga
+                tableBody.innerHTML = '<tr><td colspan="5" class="text-center" style="padding: 30px; color: var(--text-muted);"><i class="fa-solid fa-spinner fa-spin" style="margin-right: 8px;"></i> Cargando registros desde la base de datos...</td></tr>';
+                
+                supabaseClient
+                    .from('registrations')
+                    .select('*')
+                    .order('date', { ascending: false })
+                    .then(({ data, error }) => {
+                        if (error) {
+                            console.error("Error al leer Supabase, cargando respaldo local:", error);
+                            loadLocalStorageFallback();
+                        } else {
+                            // Mapear de base de datos a formato de la app
+                            registrations = data.map(row => ({
+                                studentName: row.student_name,
+                                tutorName: row.tutor_name,
+                                tutorPhone: row.tutor_phone,
+                                date: row.date
+                            }));
+                            renderTable(registrations);
+                        }
+                    })
+                    .catch(err => {
+                        console.error("Excepción al conectar con Supabase:", err);
+                        loadLocalStorageFallback();
+                    });
+            } catch (err) {
+                console.error("Fallo de inicialización de Supabase:", err);
+                loadLocalStorageFallback();
+            }
+        } else {
+            loadLocalStorageFallback();
+        }
+    }
+
+    function loadLocalStorageFallback() {
         registrations = JSON.parse(localStorage.getItem('neram_registrations')) || [];
-        // Ordenar del más nuevo al más antiguo
         registrations.sort((a, b) => new Date(b.date) - new Date(a.date));
-        
         renderTable(registrations);
     }
 
@@ -160,17 +205,60 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- ELIMINAR REGISTRO INDIVIDUAL ---
     function deleteRegistration(dateStr) {
         if (confirm('¿Estás seguro de que deseas eliminar este registro?')) {
-            registrations = registrations.filter(reg => reg.date !== dateStr);
-            localStorage.setItem('neram_registrations', JSON.stringify(registrations));
-            loadRegistrations();
+            // Eliminar de LocalStorage (como respaldo)
+            let localList = JSON.parse(localStorage.getItem('neram_registrations')) || [];
+            localList = localList.filter(reg => reg.date !== dateStr);
+            localStorage.setItem('neram_registrations', JSON.stringify(localList));
+
+            // Eliminar de Supabase
+            if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+                try {
+                    const { createClient } = supabase;
+                    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                    supabaseClient
+                        .from('registrations')
+                        .delete()
+                        .eq('date', dateStr)
+                        .then(({ error }) => {
+                            if (error) console.error("Error al borrar en Supabase:", error);
+                            loadRegistrations();
+                        });
+                } catch (err) {
+                    console.error("Fallo de conexión con Supabase:", err);
+                    loadRegistrations();
+                }
+            } else {
+                loadRegistrations();
+            }
         }
     }
 
     // --- ELIMINAR TODO ---
     btnClearAll.addEventListener('click', () => {
-        if (confirm('¡ATENCIÓN! Esto eliminará de forma permanente todas las inscripciones registradas en este navegador. ¿Deseas continuar?')) {
+        if (confirm('¡ATENCIÓN! Esto eliminará de forma permanente todas las inscripciones. ¿Deseas continuar?')) {
+            // Borrar LocalStorage
             localStorage.removeItem('neram_registrations');
-            loadRegistrations();
+
+            // Borrar Supabase
+            if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+                try {
+                    const { createClient } = supabase;
+                    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                    supabaseClient
+                        .from('registrations')
+                        .delete()
+                        .neq('student_name', '')
+                        .then(({ error }) => {
+                            if (error) console.error("Error al vaciar Supabase:", error);
+                            loadRegistrations();
+                        });
+                } catch (err) {
+                    console.error("Fallo al conectar con Supabase:", err);
+                    loadRegistrations();
+                }
+            } else {
+                loadRegistrations();
+            }
         }
     });
 
