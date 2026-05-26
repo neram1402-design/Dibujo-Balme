@@ -341,7 +341,7 @@ document.addEventListener('DOMContentLoaded', () => {
         closeReceiptModal();
     });
 
-    // Generar y descargar el recibo en PDF usando html2pdf.js
+    // Generar y descargar el recibo en PDF de forma nativa con jsPDF (vectorial, estable y nítido)
     function downloadPDFReceipt(student, tutor, amount, date, concept) {
         const formattedAmount = parseFloat(amount).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         
@@ -353,78 +353,111 @@ document.addEventListener('DOMContentLoaded', () => {
             year: 'numeric'
         });
 
-        // Crear elemento temporal para html2pdf
-        const element = document.createElement('div');
-        element.style.padding = '15px';
-        element.style.width = '140mm'; // Tamaño para A5
-        element.style.backgroundColor = '#ffffff';
-        element.style.fontFamily = "'Outfit', sans-serif";
-        element.style.position = 'absolute';
-        element.style.left = '-9999px';
-        element.style.top = '0';
-
-        element.innerHTML = `
-            <div style="border: 1px solid #e0e0e0; padding: 25px; border-radius: 12px; background: #ffffff;">
-                <div style="text-align: center; border-bottom: 2px solid #9c0738; padding-bottom: 12px; margin-bottom: 20px;">
-                    <h2 style="font-size: 1.4rem; font-weight: 700; color: #9c0738; text-transform: uppercase; margin: 5px 0; letter-spacing: 0.5px; font-family: 'Outfit', sans-serif;">Comprobante de Pago</h2>
-                    <p style="font-size: 0.8rem; color: #666; margin: 0; font-weight: 500; font-family: 'Outfit', sans-serif;">NERAM - ART • Libera tu creatividad</p>
-                </div>
-                
-                <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 0.9rem; font-family: 'Outfit', sans-serif;">
-                    <tr style="border-bottom: 1px dashed #f0f0f0;">
-                        <td style="padding: 8px 0; color: #666; font-weight: 500;">Fecha de Pago:</td>
-                        <td style="padding: 8px 0; font-weight: 600; text-align: right; color: #1a1a1a;">${formattedDate}</td>
-                    </tr>
-                    <tr style="border-bottom: 1px dashed #f0f0f0;">
-                        <td style="padding: 8px 0; color: #666; font-weight: 500;">Alumno:</td>
-                        <td style="padding: 8px 0; font-weight: 600; text-align: right; color: #1a1a1a;">${student}</td>
-                    </tr>
-                    <tr style="border-bottom: 1px dashed #f0f0f0;">
-                        <td style="padding: 8px 0; color: #666; font-weight: 500;">Tutor:</td>
-                        <td style="padding: 8px 0; font-weight: 600; text-align: right; color: #1a1a1a;">${tutor}</td>
-                    </tr>
-                    <tr style="border-bottom: 1px dashed #f0f0f0;">
-                        <td style="padding: 8px 0; color: #666; font-weight: 500;">Concepto:</td>
-                        <td style="padding: 8px 0; font-weight: 600; text-align: right; color: #1a1a1a;">${concept}</td>
-                    </tr>
-                </table>
-                
-                <div style="background: #fbf0f3; border: 1px solid #f5d6df; padding: 12px; border-radius: 8px; text-align: center; margin: 20px 0 10px 0; font-family: 'Outfit', sans-serif;">
-                    <div style="font-size: 0.75rem; color: #9c0738; font-weight: 600; text-transform: uppercase; margin-bottom: 3px; letter-spacing: 0.5px;">Total Recibido</div>
-                    <div style="font-size: 1.6rem; font-weight: 800; color: #9c0738;">$${formattedAmount} MXN</div>
-                </div>
-                
-                <div style="text-align: center; margin-top: 25px; font-size: 0.78rem; color: #999; line-height: 1.4; border-top: 1px solid #f0f0f0; padding-top: 15px; font-family: 'Outfit', sans-serif;">
-                    ¡Gracias por tu confianza! 🎨<br>
-                    Contacto: neram.art@gmail.com
-                </div>
-            </div>
-        `;
-
-        const cleanStudentName = student.toLowerCase().replace(/[^a-z0-9]/g, '_');
-        const opt = {
-            margin:       10,
-            filename:     `recibo_${cleanStudentName}_${date}.pdf`,
-            image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { 
-                scale: 2,
-                scrollY: 0,
-                scrollX: 0,
-                windowWidth: 530 // Forzar ancho de renderizado consistente para la plantilla A5 (140mm)
-            },
-            jsPDF:        { unit: 'mm', format: 'a5', orientation: 'portrait' }
-        };
-
-        // Agregar al DOM antes de llamar a html2pdf
-        document.body.appendChild(element);
-
-        // Descargar PDF y limpiar
-        html2pdf().set(opt).from(element).save().then(() => {
-            document.body.removeChild(element);
-        }).catch((err) => {
-            console.error('Error al generar PDF:', err);
-            document.body.removeChild(element);
+        // Crear instancia de jsPDF (A5 vertical, unidad en mm)
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a5'
         });
+
+        // --- DIBUJAR MARCOS ---
+        // Marco exterior burgundy (#9c0738)
+        doc.setDrawColor(156, 7, 56);
+        doc.setLineWidth(1);
+        doc.rect(8, 8, 132, 194);
+        
+        // Marco interior gris claro
+        doc.setDrawColor(220, 220, 220);
+        doc.setLineWidth(0.5);
+        doc.rect(10, 10, 128, 190);
+
+        // --- CABECERA ---
+        // Barra de color vino arriba
+        doc.setFillColor(156, 7, 56);
+        doc.rect(10, 10, 128, 8, 'F');
+
+        // Logotipo / Nombre
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(22);
+        doc.setTextColor(156, 7, 56);
+        doc.text("NERAM - ART", 74, 34, { align: "center" });
+
+        // Eslogan
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.setTextColor(110, 110, 110);
+        doc.text("L I B E R A   T U   C R E A T I V I D A D", 74, 40, { align: "center" });
+
+        // Línea divisora
+        doc.setDrawColor(227, 228, 230);
+        doc.setLineWidth(0.5);
+        doc.line(20, 48, 128, 48);
+
+        // --- TÍTULO ---
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(14);
+        doc.setTextColor(32, 34, 38);
+        doc.text("COMPROBANTE DE PAGO", 74, 58, { align: "center" });
+
+        // --- DETALLES DEL PAGO (TABLA) ---
+        const details = [
+            { label: "Fecha de Pago:", value: formattedDate },
+            { label: "Alumno:", value: student },
+            { label: "Tutor:", value: tutor },
+            { label: "Concepto:", value: concept }
+        ];
+
+        let currentY = 72;
+        details.forEach(item => {
+            // Etiqueta (Izquierda)
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(9.5);
+            doc.setTextColor(103, 107, 115);
+            doc.text(item.label, 22, currentY + 6);
+            
+            // Valor (Derecha)
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(10);
+            doc.setTextColor(32, 34, 38);
+            doc.text(String(item.value), 126, currentY + 6, { align: "right" });
+            
+            // Línea divisora
+            doc.setDrawColor(242, 242, 242);
+            doc.line(22, currentY + 11, 126, currentY + 11);
+            
+            currentY += 14;
+        });
+
+        // --- CAJA DE TOTAL ---
+        doc.setFillColor(251, 240, 243);
+        doc.setDrawColor(245, 214, 223);
+        doc.roundedRect(22, 134, 104, 26, 4, 4, 'FD');
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8.5);
+        doc.setTextColor(156, 7, 56);
+        doc.text("TOTAL RECIBIDO", 74, 142, { align: "center" });
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(17);
+        doc.setTextColor(156, 7, 56);
+        doc.text(`$${formattedAmount} MXN`, 74, 152, { align: "center" });
+
+        // --- PIE DE PÁGINA ---
+        doc.setFont("helvetica", "italic");
+        doc.setFontSize(9);
+        doc.setTextColor(100, 100, 100);
+        doc.text("¡Muchas gracias por tu confianza! 🎨", 74, 178, { align: "center" });
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        doc.setTextColor(140, 140, 140);
+        doc.text("Contacto: neram.art@gmail.com", 74, 185, { align: "center" });
+
+        // Descargar PDF
+        const cleanStudentName = student.toLowerCase().replace(/[^a-z0-9]/g, '_');
+        doc.save(`recibo_${cleanStudentName}_${date}.pdf`);
     }
 
     // --- CONTROL DE ACCESO (AUTENTICACIÓN) ---

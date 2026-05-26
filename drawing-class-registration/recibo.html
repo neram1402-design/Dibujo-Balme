@@ -185,7 +185,7 @@
     </footer>
 
     <!-- Scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // Theme Toggle
@@ -241,35 +241,114 @@
             document.getElementById('rec-date').textContent = formattedDate;
             document.getElementById('rec-amount').textContent = `$${formattedAmount} MXN`;
 
-            // Descargar PDF
+            // Descargar PDF (Nativo con jsPDF para evitar pantallas en blanco y asegurar colores)
             const btnDownload = document.getElementById('btn-download-pdf');
             btnDownload.addEventListener('click', () => {
-                const element = document.getElementById('receipt-card-to-print');
-                
-                // Ocultar botón de descarga temporalmente para que no salga en el PDF
-                btnDownload.style.display = 'none';
-
-                const cleanStudentName = student.toLowerCase().replace(/[^a-z0-9]/g, '_');
-                const opt = {
-                    margin:       10,
-                    filename:     `recibo_${cleanStudentName}.pdf`,
-                    image:        { type: 'jpeg', quality: 0.98 },
-                    html2canvas:  { 
-                        scale: 2,
-                        scrollY: 0,
-                        scrollX: 0,
-                        windowWidth: 480 // Forzar ancho de renderizado móvil consistente para evitar saltos de línea
-                    },
-                    jsPDF:        { unit: 'mm', format: 'a5', orientation: 'portrait' }
-                };
-
-                html2pdf().set(opt).from(element).save().then(() => {
-                    // Volver a mostrar el botón
-                    btnDownload.style.display = 'block';
-                }).catch((err) => {
-                    console.error(err);
-                    btnDownload.style.display = 'block';
+                // Crear instancia de jsPDF (A5 vertical, unidad en mm)
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: 'a5'
                 });
+
+                // --- DIBUJAR MARCOS ---
+                // Marco exterior burgundy (#9c0738)
+                doc.setDrawColor(156, 7, 56);
+                doc.setLineWidth(1);
+                doc.rect(8, 8, 132, 194);
+                
+                // Marco interior gris claro
+                doc.setDrawColor(220, 220, 220);
+                doc.setLineWidth(0.5);
+                doc.rect(10, 10, 128, 190);
+
+                // --- CABECERA ---
+                // Barra de color vino arriba
+                doc.setFillColor(156, 7, 56);
+                doc.rect(10, 10, 128, 8, 'F');
+
+                // Logotipo / Nombre
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(22);
+                doc.setTextColor(156, 7, 56);
+                doc.text("NERAM - ART", 74, 34, { align: "center" });
+
+                // Eslogan
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(9);
+                doc.setTextColor(110, 110, 110);
+                doc.text("L I B E R A   T U   C R E A T I V I D A D", 74, 40, { align: "center" });
+
+                // Línea divisora
+                doc.setDrawColor(227, 228, 230);
+                doc.setLineWidth(0.5);
+                doc.line(20, 48, 128, 48);
+
+                // --- TÍTULO ---
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(14);
+                doc.setTextColor(32, 34, 38);
+                doc.text("COMPROBANTE DE PAGO", 74, 58, { align: "center" });
+
+                // --- DETALLES DEL PAGO (TABLA) ---
+                const details = [
+                    { label: "Fecha de Pago:", value: formattedDate },
+                    { label: "Alumno:", value: student },
+                    { label: "Tutor:", value: tutor },
+                    { label: "Concepto:", value: concept }
+                ];
+
+                let currentY = 72;
+                details.forEach(item => {
+                    // Etiqueta (Izquierda)
+                    doc.setFont("helvetica", "normal");
+                    doc.setFontSize(9.5);
+                    doc.setTextColor(103, 107, 115);
+                    doc.text(item.label, 22, currentY + 6);
+                    
+                    // Valor (Derecha)
+                    doc.setFont("helvetica", "bold");
+                    doc.setFontSize(10);
+                    doc.setTextColor(32, 34, 38);
+                    doc.text(String(item.value), 126, currentY + 6, { align: "right" });
+                    
+                    // Línea divisora
+                    doc.setDrawColor(242, 242, 242);
+                    doc.line(22, currentY + 11, 126, currentY + 11);
+                    
+                    currentY += 14;
+                });
+
+                // --- CAJA DE TOTAL ---
+                doc.setFillColor(251, 240, 243);
+                doc.setDrawColor(245, 214, 223);
+                doc.roundedRect(22, 134, 104, 26, 4, 4, 'FD');
+
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(8.5);
+                doc.setTextColor(156, 7, 56);
+                doc.text("TOTAL RECIBIDO", 74, 142, { align: "center" });
+
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(17);
+                doc.setTextColor(156, 7, 56);
+                doc.text(`$${formattedAmount} MXN`, 74, 152, { align: "center" });
+
+                // --- PIE DE PÁGINA ---
+                doc.setFont("helvetica", "italic");
+                doc.setFontSize(9);
+                doc.setTextColor(100, 100, 100);
+                doc.text("¡Muchas gracias por tu confianza! 🎨", 74, 178, { align: "center" });
+
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(8);
+                doc.setTextColor(140, 140, 140);
+                doc.text("Contacto: neram.art@gmail.com", 74, 185, { align: "center" });
+
+                // Descargar PDF
+                const cleanStudentName = student.toLowerCase().replace(/[^a-z0-9]/g, '_');
+                doc.save(`recibo_${cleanStudentName}.pdf`);
             });
         });
     </script>
