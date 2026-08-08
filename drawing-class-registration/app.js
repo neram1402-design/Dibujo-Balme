@@ -265,4 +265,57 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // --- VERIFICAR CONEXIÓN A BASE DE DATOS EN TIEMPO REAL ---
+    const dbStatusBadge = document.getElementById('db-status-badge');
+    const dbStatusText = document.getElementById('db-status-text');
+
+    function checkDatabaseConnection() {
+        if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+            try {
+                const { createClient } = supabase;
+                const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                
+                supabaseClient.from('registrations').select('id').limit(1)
+                    .then(({ error }) => {
+                        if (error) {
+                            console.error("Error al consultar Supabase:", error);
+                            setConnectionStatus('disconnected', 'Error de conexión');
+                        } else {
+                            setConnectionStatus('connected', 'Base de datos conectada');
+                        }
+                    })
+                    .catch(err => {
+                        console.error("Excepción en conexión Supabase:", err);
+                        setConnectionStatus('disconnected', 'Sin conexión');
+                    });
+            } catch (err) {
+                console.error("Fallo al inicializar cliente Supabase:", err);
+                setConnectionStatus('disconnected', 'Error');
+            }
+        } else {
+            setConnectionStatus('local', 'Modo local (Sin base de datos)');
+        }
+    }
+
+    function setConnectionStatus(status, text) {
+        if (!dbStatusBadge || !dbStatusText) return;
+        
+        // Limpiar clases anteriores
+        dbStatusBadge.className = 'status-badge';
+        
+        // Agregar nueva clase según estado
+        if (status === 'connected') {
+            dbStatusBadge.classList.add('connected');
+        } else if (status === 'disconnected') {
+            dbStatusBadge.classList.add('disconnected');
+        } else if (status === 'local') {
+            dbStatusBadge.classList.add('local');
+        }
+        
+        dbStatusText.textContent = text;
+    }
+
+    // Ejecutar verificación al cargar
+    checkDatabaseConnection();
 });
