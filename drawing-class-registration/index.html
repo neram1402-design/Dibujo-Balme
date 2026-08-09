@@ -46,26 +46,26 @@
                 <!-- Alumno -->
                 <div class="form-group">
                     <label for="student-name"><i class="fa-solid fa-user-graduate"></i> Nombre del Alumno *</label>
-                    <input type="text" id="student-name" name="studentName" placeholder="Nombre completo del alumno" required>
+                    <input type="text" id="student-name" name="studentName" placeholder="Nombre completo del alumno" required disabled>
                     <span class="error-msg">Por favor ingresa el nombre del alumno.</span>
                 </div>
 
                 <!-- Tutor -->
                 <div class="form-group">
                     <label for="tutor-name"><i class="fa-solid fa-user-tie"></i> Nombre del Tutor *</label>
-                    <input type="text" id="tutor-name" name="tutorName" placeholder="Nombre completo del padre o tutor" required>
+                    <input type="text" id="tutor-name" name="tutorName" placeholder="Nombre completo del padre o tutor" required disabled>
                     <span class="error-msg">Por favor ingresa el nombre del tutor.</span>
                 </div>
 
                 <!-- Teléfono -->
                 <div class="form-group">
                     <label for="tutor-phone"><i class="fa-solid fa-phone"></i> Teléfono de Contacto *</label>
-                    <input type="tel" id="tutor-phone" name="tutorPhone" placeholder="Ej. 5512345678" required pattern="^[0-9]{8,12}$">
+                    <input type="tel" id="tutor-phone" name="tutorPhone" placeholder="Ej. 5512345678" required pattern="^[0-9]{8,12}$" disabled>
                     <span class="error-msg">Ingresa un teléfono válido (entre 8 y 12 dígitos).</span>
                 </div>
 
                 <!-- Action Button -->
-                <button type="submit" class="btn btn-primary btn-submit">
+                <button type="submit" class="btn btn-primary btn-submit" disabled>
                     Enviar Inscripción <i class="fa-solid fa-paper-plane"></i>
                 </button>
             </form>

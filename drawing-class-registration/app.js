@@ -307,13 +307,29 @@ document.addEventListener('DOMContentLoaded', () => {
         // Agregar nueva clase según estado
         if (status === 'connected') {
             dbStatusBadge.classList.add('connected');
-        } else if (status === 'disconnected') {
-            dbStatusBadge.classList.add('disconnected');
-        } else if (status === 'local') {
-            dbStatusBadge.classList.add('local');
+            enableFormInputs(true);
+        } else {
+            if (status === 'disconnected') {
+                dbStatusBadge.classList.add('disconnected');
+            } else if (status === 'local') {
+                dbStatusBadge.classList.add('local');
+            }
+            enableFormInputs(false);
         }
         
         dbStatusText.textContent = text;
+    }
+
+    function enableFormInputs(enable) {
+        if (!registrationForm) return;
+        const formInputs = registrationForm.querySelectorAll('input, button[type="submit"]');
+        formInputs.forEach(input => {
+            if (enable) {
+                input.removeAttribute('disabled');
+            } else {
+                input.setAttribute('disabled', 'true');
+            }
+        });
     }
 
     // Ejecutar verificación al cargar
