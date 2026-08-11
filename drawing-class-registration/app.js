@@ -143,8 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     fetch(GOOGLE_SHEETS_URL, {
                         method: 'POST',
                         mode: 'no-cors',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
+                        body: new URLSearchParams({
                             studentName: studentName,
                             tutorName: tutorName,
                             tutorPhone: cleanPhone,
