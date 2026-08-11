@@ -14,6 +14,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Ejemplo para México (+52): "524921259387"
     const WHATSAPP_NUMBER = "524921259387"; 
 
+    // --- CONFIGURACIÓN DE GOOGLE SHEETS ---
+    // URL del script de Google Apps que recibe los datos y los agrega a tu hoja de cálculo.
+    const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbzafPJDGZ7KGVVZCb3hC8R_Hd25R3foKw0M6w01QyK_N8U2e-v5jzNwkca-wo2ZzZ6zaQ/exec";
+
     // --- ELEMENTOS DEL DOM ---
     const themeToggleBtn = document.getElementById('theme-toggle');
     const registrationForm = document.getElementById('simple-registration-form');
@@ -130,6 +134,29 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 } catch (err) {
                     console.error("Fallo al conectar o guardar en Supabase:", err);
+                }
+            }
+
+            // Enviar datos a Google Sheets automáticamente
+            if (GOOGLE_SHEETS_URL) {
+                try {
+                    fetch(GOOGLE_SHEETS_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            studentName: studentName,
+                            tutorName: tutorName,
+                            tutorPhone: cleanPhone,
+                            date: registration.date
+                        })
+                    }).then(() => {
+                        console.log("Datos enviados a Google Sheets");
+                    }).catch(err => {
+                        console.error("Error enviando a Google Sheets:", err);
+                    });
+                } catch (err) {
+                    console.error("Fallo al enviar a Google Sheets:", err);
                 }
             }
 
