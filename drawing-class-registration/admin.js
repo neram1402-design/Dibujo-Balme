@@ -262,33 +262,120 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- EXPORTAR A CSV ---
+    // --- EXPORTAR A EXCEL FORMATEADO ---
     btnExportCsv.addEventListener('click', () => {
         if (registrations.length === 0) return;
 
-        // Cabecera del CSV
-        let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // \uFEFF para soportar acentos en Excel
-        csvContent += "Fecha,Nombre Alumno,Nombre Tutor,Telefono de Contacto\n";
+        // Crear workbook y worksheet
+        const wb = XLSX.utils.book_new();
 
+        // --- Construir datos de filas ---
+        const wsData = [];
+
+        // Fila 1: Título "Trazos" (se fusionará)
+        wsData.push(["", "", "", "", "Trazos", "", "", "", "", "", "", "", "", ""]);
+
+        // Fila 2: Etiquetas "pagado" sobre las columnas de meses
+        wsData.push(["", "", "", "pagado", "pagado", "pagado", "pagado", "pagado", "pagado", "pagado", "pagado", "pagado", "pagado", ""]);
+
+        // Fila 3: Encabezados
+        wsData.push(["Nombre", "Tutor", "Teléfono", "Inscripción",
+                      "30-sep", "30-oct", "30-nov", "30-dic", "30-ene",
+                      "28-feb", "30-mar", "30-abr", "30-may", "30-jun"]);
+
+        // Filas de datos
         registrations.forEach(reg => {
-            const formattedDate = new Date(reg.date).toLocaleString('es-ES');
-            
-            // Reemplazar comas por seguridad
-            const student = reg.studentName.replace(/,/g, ' ');
-            const tutor = reg.tutorName.replace(/,/g, ' ');
-            const phone = reg.tutorPhone.replace(/,/g, ' ');
-
-            csvContent += `"${formattedDate}","${student}","${tutor}","${phone}"\n`;
+            wsData.push([
+                reg.studentName,
+                reg.tutorName,
+                reg.tutorPhone,
+                "",  // Inscripción (lo llena el usuario)
+                "", "", "", "", "", "", "", "", "", ""  // Meses vacíos
+            ]);
         });
 
-        // Generar descarga
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `inscripciones_neram_art_${new Date().toISOString().slice(0,10)}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        // Crear worksheet desde los datos
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+        // --- Fusionar celdas para el título ---
+        ws['!merges'] = [
+            { s: { r: 0, c: 0 }, e: { r: 0, c: 13 } } // Fila 1: A1:N1
+        ];
+
+        // --- Ancho de columnas ---
+        ws['!cols'] = [
+            { wch: 30 },  // A: Nombre
+            { wch: 25 },  // B: Tutor
+            { wch: 15 },  // C: Teléfono
+            { wch: 12 },  // D: Inscripción
+            { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 },
+            { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }
+        ];
+
+        // --- Estilos ---
+        const greenFill = { fgColor: { rgb: "2E7D32" } };
+        const lightGreenFill = { fgColor: { rgb: "4CAF50" } };
+        const orangeFill = { fgColor: { rgb: "FF9800" } };
+        const whiteFont = { color: { rgb: "FFFFFF" }, bold: true, sz: 10 };
+        const titleFont = { bold: true, sz: 14 };
+        const centerAlign = { horizontal: "center", vertical: "center" };
+        const thinBorder = {
+            top: { style: "thin", color: { rgb: "000000" } },
+            bottom: { style: "thin", color: { rgb: "000000" } },
+            left: { style: "thin", color: { rgb: "000000" } },
+            right: { style: "thin", color: { rgb: "000000" } }
+        };
+        const currencyFmt = "$#,##0.00";
+
+        // Estilo del título (Fila 1)
+        const titleCell = ws["E1"] || (ws["E1"] = { v: "Trazos", t: "s" });
+        titleCell.s = { font: titleFont, alignment: centerAlign };
+
+        // Estilo de "pagado" (Fila 2)
+        for (let c = 3; c <= 12; c++) {
+            const cellRef = XLSX.utils.encode_cell({ r: 1, c: c });
+            if (!ws[cellRef]) ws[cellRef] = { v: "pagado", t: "s" };
+            ws[cellRef].s = {
+                fill: c >= 3 && c <= 11 ? lightGreenFill : orangeFill,
+                font: { color: { rgb: "FFFFFF" }, bold: true, sz: 9 },
+                alignment: centerAlign,
+                border: thinBorder
+            };
+        }
+
+        // Estilo de encabezados (Fila 3)
+        for (let c = 0; c < 14; c++) {
+            const cellRef = XLSX.utils.encode_cell({ r: 2, c: c });
+            if (!ws[cellRef]) ws[cellRef] = { v: "", t: "s" };
+            ws[cellRef].s = {
+                fill: greenFill,
+                font: whiteFont,
+                alignment: centerAlign,
+                border: thinBorder
+            };
+        }
+
+        // Estilo de filas de datos (Fila 4 en adelante)
+        for (let r = 3; r < wsData.length; r++) {
+            for (let c = 0; c < 14; c++) {
+                const cellRef = XLSX.utils.encode_cell({ r: r, c: c });
+                if (!ws[cellRef]) ws[cellRef] = { v: "", t: "s" };
+                ws[cellRef].s = { border: thinBorder, alignment: { vertical: "center" } };
+
+                // Formato moneda para columnas D-N (inscripción y meses)
+                if (c >= 3) {
+                    ws[cellRef].s.alignment = centerAlign;
+                    ws[cellRef].z = currencyFmt;
+                }
+            }
+        }
+
+        // Agregar hoja al workbook
+        XLSX.utils.book_append_sheet(wb, ws, "Trazos");
+
+        // Descargar
+        const fileName = `Trazos_NERAM_ART_${new Date().toISOString().slice(0,10)}.xlsx`;
+        XLSX.writeFile(wb, fileName);
     });
 
     // --- AUXILIARES ---
