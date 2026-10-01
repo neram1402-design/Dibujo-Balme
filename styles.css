@@ -324,6 +324,20 @@ input:focus {
     box-shadow: 0 0 0 3px var(--primary-glow);
 }
 
+input:disabled {
+    cursor: not-allowed !important;
+    opacity: 0.6 !important;
+    background-color: var(--border-color) !important;
+    border-color: var(--border-color) !important;
+}
+
+.btn:disabled {
+    cursor: not-allowed !important;
+    opacity: 0.55 !important;
+    pointer-events: none !important;
+    box-shadow: none !important;
+}
+
 /* Manejo de errores */
 .form-group.has-error input {
     border-color: HSL(350, 80%, 50%);
@@ -800,4 +814,170 @@ input:focus {
     .modal-actions-container {
         flex-direction: column;
     }
+}
+
+/* ==========================================================================
+   CONTROL DE PAGOS - TABLA TIPO SPREADSHEET
+   ========================================================================== */
+
+.payments-section {
+    margin-top: 40px;
+    padding-top: 32px;
+    border-top: 2px solid var(--border-color);
+}
+
+.payments-header {
+    margin-bottom: 20px;
+}
+
+.payments-header h2 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.payments-header h2 i {
+    color: var(--primary);
+}
+
+.payments-header p {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+
+.payments-table-wrapper {
+    overflow-x: auto;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
+    -webkit-overflow-scrolling: touch;
+}
+
+.payments-table {
+    width: 100%;
+    min-width: 900px;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+}
+
+.payments-header-row th {
+    background-color: HSL(142, 60%, 28%);
+    color: white;
+    font-weight: 700;
+    font-size: 0.78rem;
+    padding: 10px 8px;
+    text-align: center;
+    white-space: nowrap;
+    border: 1px solid HSL(142, 50%, 22%);
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+.payments-th-name {
+    text-align: left !important;
+    padding-left: 14px !important;
+    min-width: 180px;
+    position: sticky;
+    left: 0;
+    z-index: 3 !important;
+    background-color: HSL(142, 60%, 28%) !important;
+}
+
+.payments-table tbody tr {
+    transition: background-color 0.15s ease;
+}
+
+.payments-table tbody tr:nth-child(even) {
+    background-color: var(--bg-base);
+}
+
+.payments-table tbody tr:hover {
+    background-color: var(--primary-glow);
+}
+
+.payments-table tbody td {
+    padding: 0;
+    border: 1px solid var(--border-color);
+    text-align: center;
+    vertical-align: middle;
+    height: 42px;
+}
+
+.payments-table tbody td:first-child {
+    text-align: left;
+    padding: 8px 14px;
+    font-weight: 600;
+    color: var(--text-main);
+    white-space: nowrap;
+    position: sticky;
+    left: 0;
+    background-color: var(--bg-surface);
+    z-index: 1;
+}
+
+.payments-table tbody tr:nth-child(even) td:first-child {
+    background-color: var(--bg-base);
+}
+
+.payments-table tbody tr:hover td:first-child {
+    background-color: var(--primary-glow);
+}
+
+/* --- Celdas de Pago Clickeables --- */
+.payment-cell {
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 4px;
+    transition: all 0.2s ease;
+    user-select: none;
+    min-height: 42px;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.payment-cell:hover {
+    transform: scale(1.05);
+}
+
+/* Estado: Pendiente (no pagado) */
+.payment-cell.pending {
+    color: var(--text-muted);
+    opacity: 0.4;
+}
+
+.payment-cell.pending:hover {
+    opacity: 0.7;
+    background-color: HSL(142, 50%, 92%);
+    color: HSL(142, 50%, 30%);
+}
+
+/* Estado: Pagado */
+.payment-cell.paid {
+    background-color: HSL(142, 60%, 42%);
+    color: white;
+    font-weight: 700;
+    border-radius: 0;
+}
+
+.payment-cell.paid:hover {
+    background-color: HSL(142, 60%, 36%);
+}
+
+/* Animación al marcar pago */
+@keyframes paymentPop {
+    0% { transform: scale(0.8); opacity: 0.5; }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.payment-cell.just-paid {
+    animation: paymentPop 0.35s ease-out;
 }

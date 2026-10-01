@@ -262,33 +262,120 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- EXPORTAR A CSV ---
+    // --- EXPORTAR A EXCEL FORMATEADO ---
     btnExportCsv.addEventListener('click', () => {
         if (registrations.length === 0) return;
 
-        // Cabecera del CSV
-        let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // \uFEFF para soportar acentos en Excel
-        csvContent += "Fecha,Nombre Alumno,Nombre Tutor,Telefono de Contacto\n";
+        // Crear workbook y worksheet
+        const wb = XLSX.utils.book_new();
 
+        // --- Construir datos de filas ---
+        const wsData = [];
+
+        // Fila 1: Título "Trazos" (se fusionará)
+        wsData.push(["", "", "", "", "Trazos", "", "", "", "", "", "", "", "", ""]);
+
+        // Fila 2: Etiquetas "pagado" sobre las columnas de meses
+        wsData.push(["", "", "", "pagado", "pagado", "pagado", "pagado", "pagado", "pagado", "pagado", "pagado", "pagado", "pagado", ""]);
+
+        // Fila 3: Encabezados
+        wsData.push(["Nombre", "Tutor", "Teléfono", "Inscripción",
+                      "30-sep", "30-oct", "30-nov", "30-dic", "30-ene",
+                      "28-feb", "30-mar", "30-abr", "30-may", "30-jun"]);
+
+        // Filas de datos
         registrations.forEach(reg => {
-            const formattedDate = new Date(reg.date).toLocaleString('es-ES');
-            
-            // Reemplazar comas por seguridad
-            const student = reg.studentName.replace(/,/g, ' ');
-            const tutor = reg.tutorName.replace(/,/g, ' ');
-            const phone = reg.tutorPhone.replace(/,/g, ' ');
-
-            csvContent += `"${formattedDate}","${student}","${tutor}","${phone}"\n`;
+            wsData.push([
+                reg.studentName,
+                reg.tutorName,
+                reg.tutorPhone,
+                "",  // Inscripción (lo llena el usuario)
+                "", "", "", "", "", "", "", "", "", ""  // Meses vacíos
+            ]);
         });
 
-        // Generar descarga
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `inscripciones_neram_art_${new Date().toISOString().slice(0,10)}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        // Crear worksheet desde los datos
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+        // --- Fusionar celdas para el título ---
+        ws['!merges'] = [
+            { s: { r: 0, c: 0 }, e: { r: 0, c: 13 } } // Fila 1: A1:N1
+        ];
+
+        // --- Ancho de columnas ---
+        ws['!cols'] = [
+            { wch: 30 },  // A: Nombre
+            { wch: 25 },  // B: Tutor
+            { wch: 15 },  // C: Teléfono
+            { wch: 12 },  // D: Inscripción
+            { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 },
+            { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }
+        ];
+
+        // --- Estilos ---
+        const greenFill = { fgColor: { rgb: "2E7D32" } };
+        const lightGreenFill = { fgColor: { rgb: "4CAF50" } };
+        const orangeFill = { fgColor: { rgb: "FF9800" } };
+        const whiteFont = { color: { rgb: "FFFFFF" }, bold: true, sz: 10 };
+        const titleFont = { bold: true, sz: 14 };
+        const centerAlign = { horizontal: "center", vertical: "center" };
+        const thinBorder = {
+            top: { style: "thin", color: { rgb: "000000" } },
+            bottom: { style: "thin", color: { rgb: "000000" } },
+            left: { style: "thin", color: { rgb: "000000" } },
+            right: { style: "thin", color: { rgb: "000000" } }
+        };
+        const currencyFmt = "$#,##0.00";
+
+        // Estilo del título (Fila 1)
+        const titleCell = ws["E1"] || (ws["E1"] = { v: "Trazos", t: "s" });
+        titleCell.s = { font: titleFont, alignment: centerAlign };
+
+        // Estilo de "pagado" (Fila 2)
+        for (let c = 3; c <= 12; c++) {
+            const cellRef = XLSX.utils.encode_cell({ r: 1, c: c });
+            if (!ws[cellRef]) ws[cellRef] = { v: "pagado", t: "s" };
+            ws[cellRef].s = {
+                fill: c >= 3 && c <= 11 ? lightGreenFill : orangeFill,
+                font: { color: { rgb: "FFFFFF" }, bold: true, sz: 9 },
+                alignment: centerAlign,
+                border: thinBorder
+            };
+        }
+
+        // Estilo de encabezados (Fila 3)
+        for (let c = 0; c < 14; c++) {
+            const cellRef = XLSX.utils.encode_cell({ r: 2, c: c });
+            if (!ws[cellRef]) ws[cellRef] = { v: "", t: "s" };
+            ws[cellRef].s = {
+                fill: greenFill,
+                font: whiteFont,
+                alignment: centerAlign,
+                border: thinBorder
+            };
+        }
+
+        // Estilo de filas de datos (Fila 4 en adelante)
+        for (let r = 3; r < wsData.length; r++) {
+            for (let c = 0; c < 14; c++) {
+                const cellRef = XLSX.utils.encode_cell({ r: r, c: c });
+                if (!ws[cellRef]) ws[cellRef] = { v: "", t: "s" };
+                ws[cellRef].s = { border: thinBorder, alignment: { vertical: "center" } };
+
+                // Formato moneda para columnas D-N (inscripción y meses)
+                if (c >= 3) {
+                    ws[cellRef].s.alignment = centerAlign;
+                    ws[cellRef].z = currencyFmt;
+                }
+            }
+        }
+
+        // Agregar hoja al workbook
+        XLSX.utils.book_append_sheet(wb, ws, "Trazos");
+
+        // Descargar
+        const fileName = `Trazos_NERAM_ART_${new Date().toISOString().slice(0,10)}.xlsx`;
+        XLSX.writeFile(wb, fileName);
     });
 
     // --- AUXILIARES ---
@@ -557,6 +644,7 @@ document.addEventListener('DOMContentLoaded', () => {
             dashboardCard.style.display = 'block';
             mainContainer.classList.remove('login-mode');
             loadRegistrations();
+            loadPayments();
         } else {
             loginCard.style.display = 'block';
             dashboardCard.style.display = 'none';
@@ -586,4 +674,168 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Inicializar
     checkAuthentication();
+
+    // ======================================================================
+    //  MÓDULO DE CONTROL DE PAGOS
+    // ======================================================================
+
+    const MONTH_KEYS = [
+        'inscripcion', 'sep', 'oct', 'nov', 'dic',
+        'ene', 'feb', 'mar', 'abr', 'may', 'jun'
+    ];
+
+    const paymentsSection = document.getElementById('payments-section');
+    const paymentsTableBody = document.getElementById('payments-table-body');
+    let paymentsData = []; // Array de { student_name, month_key, amount, paid_at }
+
+    // --- CARGAR PAGOS DESDE SUPABASE ---
+    function loadPayments() {
+        if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return;
+
+        try {
+            const { createClient } = supabase;
+            const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+            supabaseClient.from('payments').select('*')
+                .then(({ data, error }) => {
+                    if (error) {
+                        console.error("Error cargando pagos:", error);
+                        paymentsData = [];
+                    } else {
+                        paymentsData = data || [];
+                    }
+                    renderPaymentsTable();
+                })
+                .catch(err => {
+                    console.error("Excepción al cargar pagos:", err);
+                    paymentsData = [];
+                    renderPaymentsTable();
+                });
+        } catch (err) {
+            console.error("Fallo de inicialización pagos:", err);
+        }
+    }
+
+    // --- RENDERIZAR TABLA DE PAGOS ---
+    function renderPaymentsTable() {
+        if (!paymentsTableBody || !paymentsSection) return;
+
+        // Obtener lista única de alumnos desde registrations
+        const students = registrations.map(r => r.studentName);
+        const uniqueStudents = [...new Set(students)];
+
+        if (uniqueStudents.length === 0) {
+            paymentsSection.style.display = 'none';
+            return;
+        }
+
+        paymentsSection.style.display = 'block';
+        paymentsTableBody.innerHTML = '';
+
+        uniqueStudents.forEach(studentName => {
+            const row = document.createElement('tr');
+
+            // Celda del nombre del alumno
+            const nameCell = document.createElement('td');
+            nameCell.textContent = studentName;
+            row.appendChild(nameCell);
+
+            // Celdas de cada mes
+            MONTH_KEYS.forEach(monthKey => {
+                const td = document.createElement('td');
+                const payment = paymentsData.find(
+                    p => p.student_name === studentName && p.month_key === monthKey
+                );
+
+                const cellDiv = document.createElement('div');
+                cellDiv.className = 'payment-cell';
+
+                if (payment && payment.amount) {
+                    cellDiv.classList.add('paid');
+                    cellDiv.textContent = '$' + Number(payment.amount).toLocaleString('es-MX');
+                    cellDiv.title = `Pagado: $${payment.amount} — Clic para desmarcar`;
+
+                    // Clic para desmarcar
+                    cellDiv.addEventListener('click', () => {
+                        if (confirm(`¿Desmarcar el pago de $${payment.amount} de "${studentName}" en ${monthKey}?`)) {
+                            removePayment(studentName, monthKey);
+                        }
+                    });
+                } else {
+                    cellDiv.classList.add('pending');
+                    cellDiv.textContent = '—';
+                    cellDiv.title = `Registrar pago de "${studentName}" — ${monthKey}`;
+
+                    // Clic para registrar pago
+                    cellDiv.addEventListener('click', () => {
+                        const amount = prompt(
+                            `Ingresa el monto del pago de "${studentName}"\nMes: ${monthKey}\n\nEjemplo: 300`,
+                            '300'
+                        );
+                        if (amount && !isNaN(amount) && Number(amount) > 0) {
+                            markPayment(studentName, monthKey, Number(amount));
+                        }
+                    });
+                }
+
+                td.appendChild(cellDiv);
+                row.appendChild(td);
+            });
+
+            paymentsTableBody.appendChild(row);
+        });
+    }
+
+    // --- REGISTRAR PAGO EN SUPABASE ---
+    function markPayment(studentName, monthKey, amount) {
+        if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return;
+
+        try {
+            const { createClient } = supabase;
+            const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+            supabaseClient.from('payments').insert([{
+                student_name: studentName,
+                month_key: monthKey,
+                amount: amount,
+                paid_at: new Date().toISOString()
+            }]).then(({ error }) => {
+                if (error) {
+                    console.error("Error al registrar pago:", error);
+                    alert("Error al guardar el pago. Revisa tu conexión.");
+                } else {
+                    console.log("Pago registrado:", studentName, monthKey, amount);
+                    loadPayments(); // Recargar tabla
+                }
+            });
+        } catch (err) {
+            console.error("Fallo al registrar pago:", err);
+        }
+    }
+
+    // --- DESMARCAR PAGO EN SUPABASE ---
+    function removePayment(studentName, monthKey) {
+        if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return;
+
+        try {
+            const { createClient } = supabase;
+            const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+            supabaseClient.from('payments')
+                .delete()
+                .eq('student_name', studentName)
+                .eq('month_key', monthKey)
+                .then(({ error }) => {
+                    if (error) {
+                        console.error("Error al desmarcar pago:", error);
+                        alert("Error al desmarcar. Revisa tu conexión.");
+                    } else {
+                        console.log("Pago desmarcado:", studentName, monthKey);
+                        loadPayments(); // Recargar tabla
+                    }
+                });
+        } catch (err) {
+            console.error("Fallo al desmarcar pago:", err);
+        }
+    }
 });
