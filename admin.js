@@ -96,6 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 date: row.date
                             }));
                             renderTable(registrations);
+                            loadPayments();
                         }
                     })
                     .catch(err => {
@@ -115,6 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
         registrations = JSON.parse(localStorage.getItem('neram_registrations')) || [];
         registrations.sort((a, b) => new Date(b.date) - new Date(a.date));
         renderTable(registrations);
+        loadPayments();
     }
 
     // --- RENDERIZAR TABLA ---
@@ -644,7 +646,6 @@ document.addEventListener('DOMContentLoaded', () => {
             dashboardCard.style.display = 'block';
             mainContainer.classList.remove('login-mode');
             loadRegistrations();
-            loadPayments();
         } else {
             loginCard.style.display = 'block';
             dashboardCard.style.display = 'none';
