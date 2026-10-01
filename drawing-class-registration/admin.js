@@ -782,6 +782,15 @@ document.addEventListener('DOMContentLoaded', () => {
     let paymentsData = []; // Array de { student_name, month_key, amount, paid_at }
 
     if (paymentsPeriodSelect) {
+        const currentM = (new Date()).getMonth() + 1;
+        const currentMonthMap = {
+            9: 'sep', 10: 'oct', 11: 'nov', 12: 'dic',
+            1: 'ene', 2: 'feb', 3: 'mar', 4: 'abr', 5: 'may', 6: 'jun'
+        };
+        if (currentMonthMap[currentM]) {
+            paymentsPeriodSelect.value = currentMonthMap[currentM];
+        }
+
         paymentsPeriodSelect.addEventListener('change', () => {
             updateSummaryCards();
         });
@@ -968,33 +977,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const totalStudents = uniqueStudents.length;
         if (totalStudents === 0) return;
 
-        const selectedPeriod = paymentsPeriodSelect ? paymentsPeriodSelect.value : 'all';
+        const selectedPeriod = (paymentsPeriodSelect && paymentsPeriodSelect.value) ? paymentsPeriodSelect.value : 'sep';
+        const monthLabel = MONTH_LABELS[selectedPeriod] || selectedPeriod;
 
-        let expectedTotal = 0;
-        let collectedTotal = 0;
-        let collectedCount = 0;
-        let pendingTotal = 0;
-        let pendingCount = 0;
-        let subTextExpected = '';
-
-        if (selectedPeriod === 'all') {
-            const numPeriods = MONTH_KEYS.length; // 11
-            expectedTotal = totalStudents * numPeriods * DEFAULT_PAYMENT_AMOUNT;
-            collectedTotal = paymentsData.reduce((sum, p) => sum + Number(p.amount || 0), 0);
-            collectedCount = paymentsData.filter(p => Number(p.amount) > 0).length;
-            pendingTotal = Math.max(0, expectedTotal - collectedTotal);
-            pendingCount = Math.max(0, (totalStudents * numPeriods) - collectedCount);
-            subTextExpected = `${totalStudents} alumnos × ${numPeriods} periodos (${DEFAULT_PAYMENT_AMOUNT} c/u)`;
-        } else {
-            const monthLabel = MONTH_LABELS[selectedPeriod] || selectedPeriod;
-            expectedTotal = totalStudents * DEFAULT_PAYMENT_AMOUNT;
-            const periodPayments = paymentsData.filter(p => p.month_key === selectedPeriod && Number(p.amount) > 0);
-            collectedTotal = periodPayments.reduce((sum, p) => sum + Number(p.amount), 0);
-            collectedCount = periodPayments.length;
-            pendingTotal = Math.max(0, expectedTotal - collectedTotal);
-            pendingCount = Math.max(0, totalStudents - collectedCount);
-            subTextExpected = `${totalStudents} alumnos en ${monthLabel}`;
-        }
+        const expectedTotal = totalStudents * DEFAULT_PAYMENT_AMOUNT;
+        const periodPayments = paymentsData.filter(p => p.month_key === selectedPeriod && Number(p.amount) > 0);
+        const collectedTotal = periodPayments.reduce((sum, p) => sum + Number(p.amount), 0);
+        const collectedCount = periodPayments.length;
+        const pendingTotal = Math.max(0, expectedTotal - collectedTotal);
+        const pendingCount = Math.max(0, totalStudents - collectedCount);
+        const subTextExpected = `${totalStudents} alumnos × $${DEFAULT_PAYMENT_AMOUNT} (${monthLabel})`;
 
         const elExpected = document.getElementById('stat-total-expected');
         const elExpectedSub = document.getElementById('stat-total-sub');
