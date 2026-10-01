@@ -438,8 +438,9 @@ document.addEventListener('DOMContentLoaded', () => {
         receiptDateGroup.classList.remove('has-error');
         receiptConceptGroup.classList.remove('has-error');
 
-        // Mostrar modal
+        // Mostrar modal y bloquear scroll de fondo
         receiptModal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
         receiptAmount.focus();
         receiptAmount.select();
     }
@@ -473,6 +474,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function closeReceiptModal() {
         receiptModal.style.display = 'none';
+        document.body.style.overflow = '';
         currentActiveReg = null;
     }
 
