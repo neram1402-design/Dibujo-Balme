@@ -121,7 +121,54 @@
         <section class="form-card admin-card" id="admin-payments-card" style="display: none;">
             <div class="card-header">
                 <h1><i class="fa-solid fa-money-check-dollar"></i> Control de Pagos — Trazos</h1>
-                <p>Haz clic en una celda para registrar un pago. Haz clic en una celda verde para desmarcar.</p>
+                <p>Haz clic en una celda para registrar un pago ($350 por defecto). Haz clic en una celda verde para desmarcar.</p>
+            </div>
+
+            <!-- Resumen Financiero Dinámico -->
+            <div class="payments-summary-container" id="payments-summary-container">
+                <div class="payment-stat-card stat-expected">
+                    <div class="stat-icon"><i class="fa-solid fa-calculator"></i></div>
+                    <div class="stat-info">
+                        <span class="stat-label">Total Esperado</span>
+                        <span class="stat-value" id="stat-total-expected">$0</span>
+                        <span class="stat-sub" id="stat-total-sub">0 alumnos × $350</span>
+                    </div>
+                </div>
+                <div class="payment-stat-card stat-collected">
+                    <div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div>
+                    <div class="stat-info">
+                        <span class="stat-label">Total Cobrado</span>
+                        <span class="stat-value" id="stat-total-collected">$0</span>
+                        <span class="stat-sub" id="stat-collected-sub">0 pagos recibidos</span>
+                    </div>
+                </div>
+                <div class="payment-stat-card stat-pending">
+                    <div class="stat-icon"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+                    <div class="stat-info">
+                        <span class="stat-label">Falta por Cobrar</span>
+                        <span class="stat-value" id="stat-total-pending">$0</span>
+                        <span class="stat-sub" id="stat-pending-sub">0 pagos pendientes</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Barra de Filtro / Selección de Periodo -->
+            <div class="payments-filter-bar">
+                <label for="payments-period-select"><i class="fa-solid fa-calendar-days"></i> Ver resumen de:</label>
+                <select id="payments-period-select">
+                    <option value="all">Todo el Ciclo (Inscripción + 10 Meses)</option>
+                    <option value="inscripcion">Inscripción</option>
+                    <option value="sep">30 de Septiembre</option>
+                    <option value="oct">30 de Octubre</option>
+                    <option value="nov">30 de Noviembre</option>
+                    <option value="dic">30 de Diciembre</option>
+                    <option value="ene">30 de Enero</option>
+                    <option value="feb">28 de Febrero</option>
+                    <option value="mar">30 de Marzo</option>
+                    <option value="abr">30 de Abril</option>
+                    <option value="may">30 de Mayo</option>
+                    <option value="jun">30 de Junio</option>
+                </select>
             </div>
 
             <div class="payments-table-wrapper">
@@ -145,6 +192,9 @@
                     <tbody id="payments-table-body">
                         <!-- Filled by JS -->
                     </tbody>
+                    <tfoot id="payments-table-foot">
+                        <!-- Totales y montos faltantes calculados por JS -->
+                    </tfoot>
                 </table>
             </div>
 
@@ -204,6 +254,31 @@
                     <label for="receipt-concept"><i class="fa-solid fa-pen-clip"></i> Concepto *</label>
                     <input type="text" id="receipt-concept" value="Mensualidad Taller de Dibujo" required>
                     <span class="error-msg">Ingresa el concepto del pago.</span>
+                </div>
+
+                <!-- Periodo en la Tabla y Sincronización Automática -->
+                <div class="form-group" id="receipt-period-group">
+                    <label for="receipt-period"><i class="fa-solid fa-calendar-check"></i> Mes / Periodo en la Tabla *</label>
+                    <select id="receipt-period" class="receipt-period-select">
+                        <option value="sep">30 de Septiembre</option>
+                        <option value="oct">30 de Octubre</option>
+                        <option value="nov">30 de Noviembre</option>
+                        <option value="dic">30 de Diciembre</option>
+                        <option value="ene">30 de Enero</option>
+                        <option value="feb">28 de Febrero</option>
+                        <option value="mar">30 de Marzo</option>
+                        <option value="abr">30 de Abril</option>
+                        <option value="may">30 de Mayo</option>
+                        <option value="jun">30 de Junio</option>
+                        <option value="inscripcion">Inscripción</option>
+                    </select>
+                </div>
+
+                <div class="receipt-sync-checkbox-container">
+                    <label class="checkbox-label" for="receipt-auto-sync">
+                        <input type="checkbox" id="receipt-auto-sync" checked>
+                        <span><i class="fa-solid fa-bolt" style="color: #f59e0b;"></i> Registrar y marcar automáticamente este pago en el <strong>Control de Pagos</strong></span>
+                    </label>
                 </div>
 
                 <!-- Modal Actions -->

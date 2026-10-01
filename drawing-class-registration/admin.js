@@ -43,6 +43,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const receiptAmountGroup = document.getElementById('receipt-amount-group');
     const receiptDateGroup = document.getElementById('receipt-date-group');
     const receiptConceptGroup = document.getElementById('receipt-concept-group');
+    const receiptPeriod = document.getElementById('receipt-period');
+    const receiptAutoSync = document.getElementById('receipt-auto-sync');
 
     // Elementos de Navegación y Pagos
     const adminNav = document.getElementById('admin-nav');
@@ -424,9 +426,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // Rellenar campos
         receiptStudent.value = currentActiveReg.studentName;
         receiptTutor.value = currentActiveReg.tutorName;
-        receiptAmount.value = '';
+        receiptAmount.value = '350'; // $350 por defecto
         receiptDate.value = new Date().toISOString().split('T')[0]; // Hoy
         receiptConcept.value = 'Mensualidad Taller de Dibujo';
+        if (receiptAutoSync) receiptAutoSync.checked = true;
+
+        autoSelectReceiptPeriod();
 
         // Limpiar errores anteriores
         receiptAmountGroup.classList.remove('has-error');
@@ -436,6 +441,34 @@ document.addEventListener('DOMContentLoaded', () => {
         // Mostrar modal
         receiptModal.style.display = 'flex';
         receiptAmount.focus();
+        receiptAmount.select();
+    }
+
+    function autoSelectReceiptPeriod() {
+        if (!receiptPeriod) return;
+        const conceptText = (receiptConcept.value || '').toLowerCase();
+        if (conceptText.includes('inscrip')) {
+            receiptPeriod.value = 'inscripcion';
+            return;
+        }
+        if (receiptDate.value) {
+            const parts = receiptDate.value.split('-');
+            const m = parseInt(parts[1], 10);
+            const monthMap = {
+                9: 'sep', 10: 'oct', 11: 'nov', 12: 'dic',
+                1: 'ene', 2: 'feb', 3: 'mar', 4: 'abr', 5: 'may', 6: 'jun'
+            };
+            if (monthMap[m]) {
+                receiptPeriod.value = monthMap[m];
+            }
+        }
+    }
+
+    function syncReceiptPayment(student, amount) {
+        if (receiptAutoSync && receiptAutoSync.checked && receiptPeriod) {
+            const monthKey = receiptPeriod.value;
+            markPayment(student, monthKey, Number(amount));
+        }
     }
 
     function closeReceiptModal() {
@@ -482,8 +515,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Quitar errores al escribir/cambiar
     receiptAmount.addEventListener('input', () => receiptAmountGroup.classList.remove('has-error'));
-    receiptDate.addEventListener('change', () => receiptDateGroup.classList.remove('has-error'));
-    receiptConcept.addEventListener('input', () => receiptConceptGroup.classList.remove('has-error'));
+    receiptDate.addEventListener('change', () => {
+        receiptDateGroup.classList.remove('has-error');
+        autoSelectReceiptPeriod();
+    });
+    receiptConcept.addEventListener('input', () => {
+        receiptConceptGroup.classList.remove('has-error');
+        autoSelectReceiptPeriod();
+    });
 
     // Acción: Descargar PDF
     btnPrintReceipt.addEventListener('click', () => {
@@ -495,7 +534,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const date = receiptDate.value;
         const concept = receiptConcept.value;
 
+        // 1. Descargar el recibo en PDF
         downloadPDFReceipt(student, tutor, amount, date, concept);
+
+        // 2. Sincronizar automáticamente con el Control de Pagos
+        syncReceiptPayment(student, amount);
     });
 
     // Acción: Enviar por WhatsApp (También descarga el PDF)
@@ -512,11 +555,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // 1. Descargar el recibo en PDF automáticamente
         downloadPDFReceipt(student, tutor, amount, date, concept);
 
-        // 2. Generar el enlace dinámico del recibo para el tutor
+        // 2. Sincronizar automáticamente con el Control de Pagos
+        syncReceiptPayment(student, amount);
+
+        // 3. Generar el enlace dinámico del recibo para el tutor
         const baseUrl = window.location.origin + window.location.pathname.replace('admin.html', 'recibo.html');
         const receiptUrl = `${baseUrl}?alumno=${encodeURIComponent(student)}&tutor=${encodeURIComponent(tutor)}&concepto=${encodeURIComponent(concept)}&cantidad=${encodeURIComponent(amount)}&fecha=${encodeURIComponent(date)}`;
 
-        // 3. Formatear y abrir el mensaje de WhatsApp
+        // 4. Formatear y abrir el mensaje de WhatsApp
         const parts = date.split('-');
         const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
         const formattedDate = dateObj.toLocaleDateString('es-ES', {
@@ -539,7 +585,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const cleanPhone = currentActiveReg.tutorPhone.replace(/\D/g, '');
         const whatsappUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodedText}`;
 
-        // 4. Abrir en WhatsApp (para arrastrar/adjuntar el archivo PDF descargado o simplemente enviar el enlace)
         window.open(whatsappUrl, '_blank');
         closeReceiptModal();
     });
@@ -710,14 +755,37 @@ document.addEventListener('DOMContentLoaded', () => {
     //  MÓDULO DE CONTROL DE PAGOS
     // ======================================================================
 
+    const DEFAULT_PAYMENT_AMOUNT = 350;
+
     const MONTH_KEYS = [
         'inscripcion', 'sep', 'oct', 'nov', 'dic',
         'ene', 'feb', 'mar', 'abr', 'may', 'jun'
     ];
 
-    const paymentsSection = document.getElementById('payments-section');
+    const MONTH_LABELS = {
+        'inscripcion': 'Inscripción',
+        'sep': '30 de Septiembre',
+        'oct': '30 de Octubre',
+        'nov': '30 de Noviembre',
+        'dic': '30 de Diciembre',
+        'ene': '30 de Enero',
+        'feb': '28 de Febrero',
+        'mar': '30 de Marzo',
+        'abr': '30 de Abril',
+        'may': '30 de Mayo',
+        'jun': '30 de Junio'
+    };
+
     const paymentsTableBody = document.getElementById('payments-table-body');
+    const paymentsTableFoot = document.getElementById('payments-table-foot');
+    const paymentsPeriodSelect = document.getElementById('payments-period-select');
     let paymentsData = []; // Array de { student_name, month_key, amount, paid_at }
+
+    if (paymentsPeriodSelect) {
+        paymentsPeriodSelect.addEventListener('change', () => {
+            updateSummaryCards();
+        });
+    }
 
     // --- CARGAR PAGOS DESDE SUPABASE ---
     function loadPayments() {
@@ -747,7 +815,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- RENDERIZAR TABLA DE PAGOS ---
+    // --- RENDERIZAR TABLA DE PAGOS Y TOTALES ---
     function renderPaymentsTable() {
         if (!paymentsTableBody) return;
 
@@ -755,18 +823,25 @@ document.addEventListener('DOMContentLoaded', () => {
         const students = registrations.map(r => r.studentName);
         const uniqueStudents = [...new Set(students)];
 
-        const tableWrapper = paymentsCard.querySelector('.payments-table-wrapper');
+        const tableWrapper = paymentsCard ? paymentsCard.querySelector('.payments-table-wrapper') : null;
+        const summaryContainer = document.getElementById('payments-summary-container');
+        const filterBar = document.querySelector('.payments-filter-bar');
 
         if (uniqueStudents.length === 0) {
             if (tableWrapper) tableWrapper.style.display = 'none';
+            if (summaryContainer) summaryContainer.style.display = 'none';
+            if (filterBar) filterBar.style.display = 'none';
             if (paymentsEmptyState) paymentsEmptyState.style.display = 'block';
             return;
         }
 
         if (tableWrapper) tableWrapper.style.display = 'block';
+        if (summaryContainer) summaryContainer.style.display = 'grid';
+        if (filterBar) filterBar.style.display = 'flex';
         if (paymentsEmptyState) paymentsEmptyState.style.display = 'none';
         paymentsTableBody.innerHTML = '';
 
+        // Filas de alumnos
         uniqueStudents.forEach(studentName => {
             const row = document.createElement('tr');
 
@@ -792,20 +867,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // Clic para desmarcar
                     cellDiv.addEventListener('click', () => {
-                        if (confirm(`¿Desmarcar el pago de $${payment.amount} de "${studentName}" en ${monthKey}?`)) {
+                        const monthLabel = MONTH_LABELS[monthKey] || monthKey;
+                        if (confirm(`¿Desmarcar el pago de $${payment.amount} de "${studentName}" en ${monthLabel}?`)) {
                             removePayment(studentName, monthKey);
                         }
                     });
                 } else {
                     cellDiv.classList.add('pending');
                     cellDiv.textContent = '—';
-                    cellDiv.title = `Registrar pago de "${studentName}" — ${monthKey}`;
+                    cellDiv.title = `Registrar pago de "${studentName}" — ${MONTH_LABELS[monthKey] || monthKey}`;
 
-                    // Clic para registrar pago
+                    // Clic para registrar pago ($350 por defecto)
                     cellDiv.addEventListener('click', () => {
+                        const monthLabel = MONTH_LABELS[monthKey] || monthKey;
                         const amount = prompt(
-                            `Ingresa el monto del pago de "${studentName}"\nMes: ${monthKey}\n\nEjemplo: 300`,
-                            '300'
+                            `Registrar pago de: "${studentName}"\nPeriodo: ${monthLabel}\n\nPresiona Aceptar para confirmar $${DEFAULT_PAYMENT_AMOUNT} o escribe otro monto:`,
+                            String(DEFAULT_PAYMENT_AMOUNT)
                         );
                         if (amount && !isNaN(amount) && Number(amount) > 0) {
                             markPayment(studentName, monthKey, Number(amount));
@@ -819,6 +896,121 @@ document.addEventListener('DOMContentLoaded', () => {
 
             paymentsTableBody.appendChild(row);
         });
+
+        // --- RENDERIZAR PIE DE TABLA (TOTALES POR COLUMNA) ---
+        renderTableFooter(uniqueStudents);
+
+        // --- ACTUALIZAR TARJETAS DE RESUMEN ---
+        updateSummaryCards(uniqueStudents);
+    }
+
+    // --- RENDERIZAR TOTALES Y FALTANTES EN EL FOOTER DE LA TABLA ---
+    function renderTableFooter(uniqueStudents) {
+        if (!paymentsTableFoot) return;
+        paymentsTableFoot.innerHTML = '';
+
+        const totalStudents = uniqueStudents.length;
+
+        // Fila 1: Total Cobrado
+        const rowCollected = document.createElement('tr');
+        rowCollected.className = 'tfoot-row-collected';
+
+        const labelCollected = document.createElement('td');
+        labelCollected.className = 'tfoot-label';
+        labelCollected.innerHTML = '<i class="fa-solid fa-circle-check"></i> Total Cobrado';
+        rowCollected.appendChild(labelCollected);
+
+        // Fila 2: Falta por Cobrar
+        const rowPending = document.createElement('tr');
+        rowPending.className = 'tfoot-row-pending';
+
+        const labelPending = document.createElement('td');
+        labelPending.className = 'tfoot-label';
+        labelPending.innerHTML = '<i class="fa-solid fa-clock-rotate-left"></i> Falta por Cobrar';
+        rowPending.appendChild(labelPending);
+
+        MONTH_KEYS.forEach(monthKey => {
+            const columnPayments = paymentsData.filter(p => p.month_key === monthKey && Number(p.amount) > 0);
+            const totalCollectedCol = columnPayments.reduce((sum, p) => sum + Number(p.amount), 0);
+            const paidCount = columnPayments.length;
+            const expectedCol = totalStudents * DEFAULT_PAYMENT_AMOUNT;
+            const missingCol = Math.max(0, expectedCol - totalCollectedCol);
+            const missingCount = Math.max(0, totalStudents - paidCount);
+
+            // Celda Cobrado
+            const tdCollected = document.createElement('td');
+            tdCollected.className = 'tfoot-cell-collected';
+            tdCollected.textContent = '$' + totalCollectedCol.toLocaleString('es-MX');
+            tdCollected.title = `${paidCount} de ${totalStudents} alumnos han pagado`;
+            rowCollected.appendChild(tdCollected);
+
+            // Celda Falta
+            const tdPending = document.createElement('td');
+            tdPending.className = 'tfoot-cell-pending';
+            if (missingCol === 0) {
+                tdPending.className += ' tfoot-cell-complete';
+                tdPending.innerHTML = '<span style="color: #2e7d32;">Completo ✅</span>';
+                tdPending.title = `Todos los ${totalStudents} alumnos han pagado`;
+            } else {
+                tdPending.innerHTML = `$${missingCol.toLocaleString('es-MX')}<br><small style="font-weight: normal; opacity: 0.85;">(Faltan ${missingCount})</small>`;
+                tdPending.title = `Faltan ${missingCount} alumno(s) por pagar $${DEFAULT_PAYMENT_AMOUNT}`;
+            }
+            rowPending.appendChild(tdPending);
+        });
+
+        paymentsTableFoot.appendChild(rowCollected);
+        paymentsTableFoot.appendChild(rowPending);
+    }
+
+    // --- ACTUALIZAR TARJETAS DE RESUMEN FINANCIERO ---
+    function updateSummaryCards(studentsList) {
+        const uniqueStudents = studentsList || [...new Set(registrations.map(r => r.studentName))];
+        const totalStudents = uniqueStudents.length;
+        if (totalStudents === 0) return;
+
+        const selectedPeriod = paymentsPeriodSelect ? paymentsPeriodSelect.value : 'all';
+
+        let expectedTotal = 0;
+        let collectedTotal = 0;
+        let collectedCount = 0;
+        let pendingTotal = 0;
+        let pendingCount = 0;
+        let subTextExpected = '';
+
+        if (selectedPeriod === 'all') {
+            const numPeriods = MONTH_KEYS.length; // 11
+            expectedTotal = totalStudents * numPeriods * DEFAULT_PAYMENT_AMOUNT;
+            collectedTotal = paymentsData.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+            collectedCount = paymentsData.filter(p => Number(p.amount) > 0).length;
+            pendingTotal = Math.max(0, expectedTotal - collectedTotal);
+            pendingCount = Math.max(0, (totalStudents * numPeriods) - collectedCount);
+            subTextExpected = `${totalStudents} alumnos × ${numPeriods} periodos (${DEFAULT_PAYMENT_AMOUNT} c/u)`;
+        } else {
+            const monthLabel = MONTH_LABELS[selectedPeriod] || selectedPeriod;
+            expectedTotal = totalStudents * DEFAULT_PAYMENT_AMOUNT;
+            const periodPayments = paymentsData.filter(p => p.month_key === selectedPeriod && Number(p.amount) > 0);
+            collectedTotal = periodPayments.reduce((sum, p) => sum + Number(p.amount), 0);
+            collectedCount = periodPayments.length;
+            pendingTotal = Math.max(0, expectedTotal - collectedTotal);
+            pendingCount = Math.max(0, totalStudents - collectedCount);
+            subTextExpected = `${totalStudents} alumnos en ${monthLabel}`;
+        }
+
+        const elExpected = document.getElementById('stat-total-expected');
+        const elExpectedSub = document.getElementById('stat-total-sub');
+        const elCollected = document.getElementById('stat-total-collected');
+        const elCollectedSub = document.getElementById('stat-collected-sub');
+        const elPending = document.getElementById('stat-total-pending');
+        const elPendingSub = document.getElementById('stat-pending-sub');
+
+        if (elExpected) elExpected.textContent = '$' + expectedTotal.toLocaleString('es-MX');
+        if (elExpectedSub) elExpectedSub.textContent = subTextExpected;
+
+        if (elCollected) elCollected.textContent = '$' + collectedTotal.toLocaleString('es-MX');
+        if (elCollectedSub) elCollectedSub.textContent = `${collectedCount} pago(s) registrado(s)`;
+
+        if (elPending) elPending.textContent = '$' + pendingTotal.toLocaleString('es-MX');
+        if (elPendingSub) elPendingSub.textContent = `${pendingCount} pago(s) pendiente(s)`;
     }
 
     // --- REGISTRAR PAGO EN SUPABASE ---
