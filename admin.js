@@ -44,8 +44,34 @@ document.addEventListener('DOMContentLoaded', () => {
     const receiptDateGroup = document.getElementById('receipt-date-group');
     const receiptConceptGroup = document.getElementById('receipt-concept-group');
 
+    // Elementos de Navegación y Pagos
+    const adminNav = document.getElementById('admin-nav');
+    const navAlumnos = document.getElementById('nav-alumnos');
+    const navPagos = document.getElementById('nav-pagos');
+    const paymentsCard = document.getElementById('admin-payments-card');
+    const paymentsEmptyState = document.getElementById('payments-empty-state');
+
     let registrations = [];
     let currentActiveReg = null;
+
+    // --- NAVEGACIÓN ENTRE VISTAS ---
+    function switchView(view) {
+        if (view === 'alumnos') {
+            dashboardCard.style.display = 'block';
+            paymentsCard.style.display = 'none';
+            navAlumnos.classList.add('active');
+            navPagos.classList.remove('active');
+        } else if (view === 'pagos') {
+            dashboardCard.style.display = 'none';
+            paymentsCard.style.display = 'block';
+            navAlumnos.classList.remove('active');
+            navPagos.classList.add('active');
+            renderPaymentsTable();
+        }
+    }
+
+    navAlumnos.addEventListener('click', () => switchView('alumnos'));
+    navPagos.addEventListener('click', () => switchView('pagos'));
 
     // --- TEMA CLARO / OSCURO ---
     const currentTheme = localStorage.getItem('theme') || 'light';
@@ -644,11 +670,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isAuthenticated) {
             loginCard.style.display = 'none';
             dashboardCard.style.display = 'block';
+            paymentsCard.style.display = 'none';
+            adminNav.style.display = 'flex';
             mainContainer.classList.remove('login-mode');
             loadRegistrations();
         } else {
             loginCard.style.display = 'block';
             dashboardCard.style.display = 'none';
+            paymentsCard.style.display = 'none';
+            adminNav.style.display = 'none';
             mainContainer.classList.add('login-mode');
         }
     }
@@ -719,18 +749,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- RENDERIZAR TABLA DE PAGOS ---
     function renderPaymentsTable() {
-        if (!paymentsTableBody || !paymentsSection) return;
+        if (!paymentsTableBody) return;
 
         // Obtener lista única de alumnos desde registrations
         const students = registrations.map(r => r.studentName);
         const uniqueStudents = [...new Set(students)];
 
+        const tableWrapper = paymentsCard.querySelector('.payments-table-wrapper');
+
         if (uniqueStudents.length === 0) {
-            paymentsSection.style.display = 'none';
+            if (tableWrapper) tableWrapper.style.display = 'none';
+            if (paymentsEmptyState) paymentsEmptyState.style.display = 'block';
             return;
         }
 
-        paymentsSection.style.display = 'block';
+        if (tableWrapper) tableWrapper.style.display = 'block';
+        if (paymentsEmptyState) paymentsEmptyState.style.display = 'none';
         paymentsTableBody.innerHTML = '';
 
         uniqueStudents.forEach(studentName => {

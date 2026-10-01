@@ -817,37 +817,54 @@ input:disabled {
 }
 
 /* ==========================================================================
+   NAVEGACIÓN ADMIN (BOTONES ALUMNOS / PAGOS)
+   ========================================================================== */
+
+.admin-nav {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 24px;
+}
+
+.admin-nav-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 22px;
+    font-family: var(--font-sans);
+    font-size: 0.88rem;
+    font-weight: 600;
+    border-radius: 30px;
+    border: 2px solid var(--border-color);
+    background-color: var(--bg-surface);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.admin-nav-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: translateY(-1px);
+}
+
+.admin-nav-btn.active {
+    background-color: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    box-shadow: 0 4px 12px rgba(156, 7, 56, 0.25);
+}
+
+.admin-nav-btn.active:hover {
+    transform: translateY(-1px);
+    color: white;
+}
+
+/* ==========================================================================
    CONTROL DE PAGOS - TABLA TIPO SPREADSHEET
    ========================================================================== */
 
-.payments-section {
-    margin-top: 40px;
-    padding-top: 32px;
-    border-top: 2px solid var(--border-color);
-}
-
-.payments-header {
-    margin-bottom: 20px;
-}
-
-.payments-header h2 {
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: var(--text-main);
-    margin-bottom: 6px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.payments-header h2 i {
-    color: var(--primary);
-}
-
-.payments-header p {
-    font-size: 0.82rem;
-    color: var(--text-muted);
-}
 
 .payments-table-wrapper {
     overflow-x: auto;

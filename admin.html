@@ -33,6 +33,16 @@
             </a>
         </header>
 
+        <!-- Navegación entre secciones (solo visible después de login) -->
+        <div class="admin-nav" id="admin-nav" style="display: none;">
+            <button class="admin-nav-btn active" id="nav-alumnos" data-view="alumnos">
+                <i class="fa-solid fa-users"></i> Alumnos
+            </button>
+            <button class="admin-nav-btn" id="nav-pagos" data-view="pagos">
+                <i class="fa-solid fa-money-check-dollar"></i> Control de Pagos
+            </button>
+        </div>
+
         <!-- Login Card -->
         <section class="form-card login-card" id="admin-login-card">
             <div class="card-header">
@@ -53,7 +63,7 @@
             </form>
         </section>
 
-        <!-- Admin Card -->
+        <!-- ====== VISTA 1: ALUMNOS ====== -->
         <section class="form-card admin-card" id="admin-dashboard-card" style="display: none;">
             <div class="card-header">
                 <h1>Panel de Alumnos Inscritos</h1>
@@ -105,37 +115,44 @@
                     <i class="fa-solid fa-trash-can"></i> Borrar Todo
                 </button>
             </div>
+        </section>
 
-            <!-- ====== CONTROL DE PAGOS ====== -->
-            <div class="payments-section" id="payments-section" style="display: none;">
-                <div class="payments-header">
-                    <h2><i class="fa-solid fa-money-check-dollar"></i> Control de Pagos — Trazos</h2>
-                    <p>Haz clic en una celda para registrar un pago. Clic derecho o doble clic para desmarcar.</p>
-                </div>
+        <!-- ====== VISTA 2: CONTROL DE PAGOS ====== -->
+        <section class="form-card admin-card" id="admin-payments-card" style="display: none;">
+            <div class="card-header">
+                <h1><i class="fa-solid fa-money-check-dollar"></i> Control de Pagos — Trazos</h1>
+                <p>Haz clic en una celda para registrar un pago. Haz clic en una celda verde para desmarcar.</p>
+            </div>
 
-                <div class="payments-table-wrapper">
-                    <table class="payments-table" id="payments-table">
-                        <thead>
-                            <tr class="payments-header-row">
-                                <th class="payments-th-name">Alumno</th>
-                                <th class="payments-th">Inscripción</th>
-                                <th class="payments-th">30-sep</th>
-                                <th class="payments-th">30-oct</th>
-                                <th class="payments-th">30-nov</th>
-                                <th class="payments-th">30-dic</th>
-                                <th class="payments-th">30-ene</th>
-                                <th class="payments-th">28-feb</th>
-                                <th class="payments-th">30-mar</th>
-                                <th class="payments-th">30-abr</th>
-                                <th class="payments-th">30-may</th>
-                                <th class="payments-th">30-jun</th>
-                            </tr>
-                        </thead>
-                        <tbody id="payments-table-body">
-                            <!-- Filled by JS -->
-                        </tbody>
-                    </table>
-                </div>
+            <div class="payments-table-wrapper">
+                <table class="payments-table" id="payments-table">
+                    <thead>
+                        <tr class="payments-header-row">
+                            <th class="payments-th-name">Alumno</th>
+                            <th class="payments-th">Inscripción</th>
+                            <th class="payments-th">30-sep</th>
+                            <th class="payments-th">30-oct</th>
+                            <th class="payments-th">30-nov</th>
+                            <th class="payments-th">30-dic</th>
+                            <th class="payments-th">30-ene</th>
+                            <th class="payments-th">28-feb</th>
+                            <th class="payments-th">30-mar</th>
+                            <th class="payments-th">30-abr</th>
+                            <th class="payments-th">30-may</th>
+                            <th class="payments-th">30-jun</th>
+                        </tr>
+                    </thead>
+                    <tbody id="payments-table-body">
+                        <!-- Filled by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Empty State for Payments -->
+            <div class="admin-empty-state" id="payments-empty-state" style="display: none;">
+                <i class="fa-solid fa-receipt"></i>
+                <h3>No hay alumnos registrados</h3>
+                <p>Los alumnos inscritos aparecerán aquí para llevar el control de sus pagos.</p>
             </div>
         </section>
     </main>
